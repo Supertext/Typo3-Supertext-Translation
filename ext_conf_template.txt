@@ -1,0 +1,16 @@
+# cat=basic/enable/010; type=boolean; label=Translate automatically: Run Supertext AI translation whenever pages or content elements are localized.
+enabled = 1
+# cat=basic/api/020; type=string; label=Supertext API key: From supertext.com > Integrations > API. The environment variable SUPERTEXT_API_KEY takes precedence.
+apiKey =
+# cat=basic/api/030; type=options[live=live,staging=staging,testing=testing]; label=API environment
+environment = live
+# cat=basic/api/040; type=string; label=Custom API base URL: Overrides the environment when set (e.g. https://api.supertext.com/v1/).
+endpoint =
+# cat=advanced/poll/010; type=int+; label=Polling timeout (seconds): Maximum time to wait for a translation.
+pollTimeout = 180
+# cat=advanced/poll/020; type=int+; label=Polling interval (seconds)
+pollInterval = 2
+# cat=advanced/content/010; type=string; label=Skip bodytext for these content types: Comma-separated CTypes whose bodytext is code, not prose.
+skipBodytextCTypes = html
+# cat=advanced/content/020; type=boolean; label=Regenerate page slugs: Build the URL segment of a translated page from its translated title.
+regenerateSlugs = 1

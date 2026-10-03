@@ -1,0 +1,22 @@
+{
+    "name": "supertext/typo3-translation",
+    "type": "typo3-cms-extension",
+    "description": "Supertext AI translation for TYPO3: translates content automatically when editors localize pages and content elements.",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.supertext.com",
+    "authors": [
+        { "name": "Supertext AG", "homepage": "https://www.supertext.com" }
+    ],
+    "require": {
+        "php": "^8.2",
+        "ext-dom": "*",
+        "typo3/cms-core": "^13.4 || ^14.3",
+        "typo3/cms-backend": "^13.4 || ^14.3"
+    },
+    "autoload": {
+        "psr-4": { "Supertext\\Typo3Translation\\": "Classes/" }
+    },
+    "extra": {
+        "typo3/cms": { "extension-key": "supertext_translation" }
+    }
+}

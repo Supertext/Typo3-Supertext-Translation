@@ -1,0 +1,4 @@
+/vendor/
+/.Build/
+composer.lock
+.DS_Store

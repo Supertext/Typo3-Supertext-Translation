@@ -1,0 +1,17 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Supertext\Typo3Translation\:
+    resource: '../Classes/*'
+
+  Supertext\Typo3Translation\Hooks\DataHandlerHook:
+    public: true
+
+  Supertext\Typo3Translation\Command\LocalizeCommand:
+    tags:
+      - name: console.command
+        command: 'supertext:localize'
+        description: 'Localize a page (and its content) into a site language and translate it with Supertext.'
