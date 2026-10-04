@@ -2,6 +2,10 @@
 
 For administrators setting up the extension on a TYPO3 site.
 
+## Just want to try it?
+
+A ready-to-run container with TYPO3 14.3, demo content in English, German and French, and this extension installed is in `demo/` (`docker build -f demo/Dockerfile .`). It is also what runs the public Supertext demo. See the *Demo* section of the [developer guide](DEVELOPER.md#demo-railway).
+
 ## Requirements
 
 | | |

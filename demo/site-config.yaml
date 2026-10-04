@@ -1,0 +1,40 @@
+base: /
+dependencies:
+  - typo3/theme-camino
+rootPageId: 1
+websiteTitle: 'Supertext TYPO3 Demo'
+languages:
+  -
+    title: English
+    enabled: true
+    locale: en-US
+    hreflang: en-US
+    base: /
+    websiteTitle: 'Supertext TYPO3 Demo'
+    navigationTitle: English
+    flag: us
+    languageId: 0
+  -
+    title: 'Deutsch (Schweiz)'
+    enabled: true
+    locale: de-CH
+    hreflang: de-CH
+    base: /de/
+    navigationTitle: Deutsch
+    flag: ch
+    languageId: 1
+    fallbackType: fallback
+    fallbacks: '0'
+    supertext_politeness: more
+  -
+    title: 'Français (Suisse)'
+    enabled: true
+    locale: fr-CH
+    hreflang: fr-CH
+    base: /fr/
+    navigationTitle: Français
+    flag: ch
+    languageId: 2
+    fallbackType: fallback
+    fallbacks: '0'
+    supertext_politeness: more

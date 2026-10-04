@@ -71,19 +71,50 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at a mock that implem
 php Tests/HtmlDocumentTest.php   # HTML packing round trip, no TYPO3 needed
 ```
 
-CI (`.github/workflows/deploy.yml`) lints all PHP files on 8.2, 8.3 and 8.4 and runs the test on every push and pull request.
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs the test and syntax-checks the demo entrypoint on every push and pull request.
 
-## Deployment to the demo
+## Demo (Railway)
 
-Pushes to `main` deploy to the TYPO3 demo on demo.supertext.com once these repository secrets exist (*Settings → Secrets and variables → Actions*):
+The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the official **Camino** theme and its demo content (7 pages, ~50 content elements), English as default language plus German and French (Switzerland), and this extension installed from the repo itself. It runs on Railway in the `supertext-cms-demos` project, service `typo3`, region EU West (Amsterdam).
 
-| Secret | |
+**Deploys:** Railway watches `main` of this repository and rebuilds on every push, so a merged change is live a few minutes later. No GitHub secrets are needed.
+
+**What's in `demo/`:**
+
+| File | Purpose |
 | --- | --- |
-| `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` | SSH access to the demo server |
-| `DEPLOY_PATH` | TYPO3 project root (folder with `composer.json`) |
-| `DEPLOY_PORT`, `DEPLOY_PHP`, `DEPLOY_COMPOSER`, `DEPLOY_KNOWN_HOSTS` | optional |
+| `Dockerfile` | `php:8.3-apache` + extensions, `composer install` from the lock file, extension copied to `packages/supertext_translation` |
+| `composer.json`, `composer.lock` | The demo project (TYPO3 core packages, Camino, this extension via a path repository) |
+| `entrypoint.sh` | Links persistent folders into `/data`, installs TYPO3 on first boot, runs `extension:setup` + `cache:flush` on every boot |
+| `site-config.yaml` | Site configuration written on first boot (languages, `supertext_politeness`) |
+| `additional.php` | Reverse-proxy and trusted-host settings for Railway's TLS proxy |
+| `apache.conf`, `php.ini` | Web server and PHP settings |
 
-The job rsyncs the extension into `packages/supertext_translation/`, requires it on first deploy, runs `extension:setup` and flushes caches. Without the secrets it skips quietly.
+**Persistent state** lives on a Railway volume mounted at `/data`: `var/` (SQLite database, caches, logs), `fileadmin/`, `sites/` and `system/settings.php`. Everything else comes from the image, so code changes never touch content. To reset the demo to fresh Camino content, delete the files on the volume (or recreate the volume) and redeploy.
+
+**Service variables:**
+
+| Variable | |
+| --- | --- |
+| `TYPO3_ADMIN_PASSWORD` | Required for the first boot (creates the `admin` backend user). Not used afterwards. |
+| `TYPO3_ADMIN_USER`, `TYPO3_ADMIN_EMAIL`, `TYPO3_PROJECT_NAME` | Optional, first boot only |
+| `SUPERTEXT_API_KEY` | Supertext key used by the extension |
+| `SUPERTEXT_API_ENDPOINT` | Optional, e.g. the staging API |
+| `TYPO3_TRUSTED_HOSTS` | Optional regex of allowed host names (default: any) |
+| `RAILWAY_DOCKERFILE_PATH` | `demo/Dockerfile` (the build context is the repo root) |
+
+**Run it locally:**
+
+```bash
+docker build -f demo/Dockerfile -t supertext-typo3-demo .
+docker run --rm -p 8080:80 -v typo3demo:/data \
+  -e TYPO3_ADMIN_PASSWORD='choose-one' -e SUPERTEXT_API_KEY=... supertext-typo3-demo
+# frontend http://localhost:8080/  backend http://localhost:8080/typo3/
+```
+
+**Updating TYPO3 in the demo:** `cd demo && composer update "typo3/*"` in a checkout where `demo/packages/supertext_translation` exists (or mirror the container layout), then commit the new `composer.lock`. Composer must run with plugins enabled (`COMPOSER_ALLOW_SUPERUSER=1` when root), otherwise `vendor/typo3/autoload-include.php` is missing and TYPO3 fails with *"…/vendor/typo3/sysext/*/ directory does not exist"*.
+
+The older install on demo.supertext.com (`/typo3-translation/`) is no longer deployed to and can be removed.
 
 ## Releasing
 
