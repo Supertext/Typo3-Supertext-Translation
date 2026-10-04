@@ -100,7 +100,7 @@ The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the
 | `TYPO3_ADMIN_USER`, `TYPO3_ADMIN_EMAIL`, `TYPO3_PROJECT_NAME` | Optional, first boot only |
 | `SUPERTEXT_API_KEY` | Supertext key used by the extension |
 | `SUPERTEXT_API_ENDPOINT` | Optional, e.g. the staging API |
-| `TYPO3_TRUSTED_HOSTS` | Optional regex of allowed host names (default: any); set to the Railway domain on the demo |
+| `TYPO3_TRUSTED_HOSTS` | Optional regex of allowed host names (default: any); on the demo it lists the Railway domain **and `healthcheck.railway.app`** (the host Railway's healthcheck sends; without it every check gets a 500) |
 | `PORT` | Port Apache listens on; `8080` on Railway, matching the domain's target port |
 | `RAILWAY_DOCKERFILE_PATH` | `demo/Dockerfile` (the build context is the repo root) |
 
