@@ -7,6 +7,11 @@ APP=/var/www/typo3
 DATA=/data
 cd "$APP"
 
+# mod_php needs the prefork MPM. On Railway a second MPM ends up enabled and
+# Apache refuses to start ("More than one MPM loaded"), so keep only prefork.
+rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*
+[ -e /etc/apache2/mods-enabled/mpm_prefork.load ] || a2enmod -q mpm_prefork
+
 # Apache listens on Railway's $PORT (default 80).
 PORT="${PORT:-80}"
 sed -ri "s/^Listen .*/Listen ${PORT}/" /etc/apache2/ports.conf

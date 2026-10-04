@@ -85,7 +85,7 @@ The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the
 | --- | --- |
 | `Dockerfile` | `php:8.3-apache` + extensions, `composer install` from the lock file, extension copied to `packages/supertext_translation` |
 | `composer.json`, `composer.lock` | The demo project (TYPO3 core packages, Camino, this extension via a path repository) |
-| `entrypoint.sh` | Links persistent folders into `/data`, installs TYPO3 on first boot, runs `extension:setup` + `cache:flush` on every boot |
+| `entrypoint.sh` | Keeps only Apache's prefork MPM (Railway otherwise fails with *More than one MPM loaded*), links persistent folders into `/data`, installs TYPO3 on first boot, runs `extension:setup` + `cache:flush` on every boot |
 | `site-config.yaml` | Site configuration written on first boot (languages, `supertext_politeness`) |
 | `additional.php` | Reverse-proxy and trusted-host settings for Railway's TLS proxy |
 | `apache.conf`, `php.ini` | Web server and PHP settings |
