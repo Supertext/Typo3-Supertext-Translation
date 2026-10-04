@@ -34,6 +34,7 @@ COPY demo/php.ini /usr/local/etc/php/conf.d/typo3.ini
 COPY demo/entrypoint.sh /usr/local/bin/typo3-entrypoint
 RUN chmod +x /usr/local/bin/typo3-entrypoint
 
-VOLUME /data
+# No VOLUME instruction: Railway rejects it and mounts its own volume at /data.
+# Locally: docker run -v typo3demo:/data ...
 ENTRYPOINT ["typo3-entrypoint"]
 CMD ["apache2-foreground"]

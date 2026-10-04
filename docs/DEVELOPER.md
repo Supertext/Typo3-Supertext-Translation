@@ -75,7 +75,7 @@ CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs th
 
 ## Demo (Railway)
 
-The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the official **Camino** theme and its demo content (7 pages, ~50 content elements), English as default language plus German and French (Switzerland), and this extension installed from the repo itself. It runs on Railway in the `supertext-cms-demos` project, service `typo3`, region EU West (Amsterdam).
+The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the official **Camino** theme and its demo content (7 pages, ~50 content elements), English as default language plus German and French (Switzerland), and this extension installed from the repo itself. It runs on Railway in the `supertext-cms-demos` project, service `typo3`, region EU West (Amsterdam): <https://typo3-production.up.railway.app/> (backend: `/typo3/`).
 
 **Deploys:** Railway watches `main` of this repository and rebuilds on every push, so a merged change is live a few minutes later. No GitHub secrets are needed.
 
@@ -90,7 +90,7 @@ The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the
 | `additional.php` | Reverse-proxy and trusted-host settings for Railway's TLS proxy |
 | `apache.conf`, `php.ini` | Web server and PHP settings |
 
-**Persistent state** lives on a Railway volume mounted at `/data`: `var/` (SQLite database, caches, logs), `fileadmin/`, `sites/` and `system/settings.php`. Everything else comes from the image, so code changes never touch content. To reset the demo to fresh Camino content, delete the files on the volume (or recreate the volume) and redeploy.
+**Persistent state** lives on a Railway volume (`typo3-data`) mounted at `/data` — the Dockerfile has no `VOLUME` line because Railway's builder rejects it: `var/` (SQLite database, caches, logs), `fileadmin/`, `sites/` and `system/settings.php`. Everything else comes from the image, so code changes never touch content. To reset the demo to fresh Camino content, delete the files on the volume (or recreate the volume) and redeploy.
 
 **Service variables:**
 
@@ -100,7 +100,8 @@ The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the
 | `TYPO3_ADMIN_USER`, `TYPO3_ADMIN_EMAIL`, `TYPO3_PROJECT_NAME` | Optional, first boot only |
 | `SUPERTEXT_API_KEY` | Supertext key used by the extension |
 | `SUPERTEXT_API_ENDPOINT` | Optional, e.g. the staging API |
-| `TYPO3_TRUSTED_HOSTS` | Optional regex of allowed host names (default: any) |
+| `TYPO3_TRUSTED_HOSTS` | Optional regex of allowed host names (default: any); set to the Railway domain on the demo |
+| `PORT` | Port Apache listens on; `8080` on Railway, matching the domain's target port |
 | `RAILWAY_DOCKERFILE_PATH` | `demo/Dockerfile` (the build context is the repo root) |
 
 **Run it locally:**
