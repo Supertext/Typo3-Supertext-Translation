@@ -115,6 +115,7 @@ Existing translations stay untouched; only automatic translation stops.
 
 | Message | Cause / fix |
 | --- | --- |
+| *Too many requests to Supertext* | The API's per-second limit was still exceeded after 4 automatic retries. Wait a moment and translate again. |
 | *No Supertext API key configured* | Set the key (step 3). Records were still localized as plain copies. |
 | *Authentication failed* | The key is wrong or revoked. |
 | *has no site language N* | The page isn't inside a site, or the language isn't defined in that site's configuration. |

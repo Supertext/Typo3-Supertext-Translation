@@ -17,6 +17,9 @@ use TYPO3\CMS\Core\Http\RequestFactory;
  */
 final class SupertextClient
 {
+    /** Retries after HTTP 429 (rate limit per second). */
+    private const RATE_LIMIT_RETRIES = 4;
+
     public const MAX_DOCUMENT_CHARACTERS = 900000;
 
     public function __construct(
@@ -146,10 +149,19 @@ final class SupertextClient
         $options['http_errors'] = false;
         $options['timeout'] ??= 30;
 
-        try {
-            $response = $this->requestFactory->request($this->settings->getBaseUrl() . ltrim($path, '/'), $method, $options);
-        } catch (\Throwable $e) {
-            throw new SupertextException('Could not reach Supertext: ' . $e->getMessage(), 1759500011, $e);
+        // The API limits requests per second; on HTTP 429 wait (Retry-After, else 1 s, 2 s, 4 s, 8 s) and retry.
+        for ($attempt = 0; ; $attempt++) {
+            try {
+                $response = $this->requestFactory->request($this->settings->getBaseUrl() . ltrim($path, '/'), $method, $options);
+            } catch (\Throwable $e) {
+                throw new SupertextException('Could not reach Supertext: ' . $e->getMessage(), 1759500011, $e);
+            }
+            if ($response->getStatusCode() !== 429 || $attempt >= self::RATE_LIMIT_RETRIES) {
+                break;
+            }
+            $retryAfter = $response->getHeaderLine('Retry-After');
+            $delayMs = is_numeric($retryAfter) ? min(30000, (int)((float)$retryAfter * 1000)) : 1000 * 2 ** $attempt + random_int(0, 250);
+            usleep($delayMs * 1000);
         }
 
         $code = $response->getStatusCode();

@@ -44,7 +44,9 @@ Shared with the WordPress plugin and every other Supertext CMS plugin:
 3. `GET …/{file_id}/translation` → translated HTML
 4. `DELETE …/{file_id}` (files also expire after 24 h)
 
-Auth header: `Authorization: Supertext-Auth-Key <key>`. The key may be configured with or without the `Supertext-Auth-Key ` prefix; the client strips it and always sends exactly one. The header name must be `Authorization` (the live API answers 403 to `Authentication`). Base URLs: `https://api.supertext.com/v1/` (live), `api.staging…`, `api.testing…`.
+Auth header: `Authorization: Supertext-Auth-Key <key>`. The key may be configured with or without the `Supertext-Auth-Key ` prefix; the client strips it and always sends exactly one. The header name must be `Authorization` (the live API answers 403 to `Authentication`).
+
+**Rate limit:** the API limits requests per second per key (HTTP 429, `RATE_LIMIT_EXCEEDED`); translating into several languages at once hits it. The client retries a 429 up to 4 times, waiting for `Retry-After` if sent, otherwise 1, 2, 4 and 8 seconds (plus jitter), before reporting *Too many requests*. Base URLs: `https://api.supertext.com/v1/` (live), `api.staging…`, `api.testing…`.
 
 ## Local development
 
