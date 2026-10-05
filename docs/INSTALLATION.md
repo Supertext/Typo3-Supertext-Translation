@@ -47,12 +47,18 @@ vendor/bin/typo3 cache:flush
 
 Either:
 
-- **Backend:** *Admin Tools → Settings → Extension Configuration → supertext_translation* → paste the key into *Supertext API key*, or
+- **Backend:** *System → Settings → Extension Configuration → supertext_translation* (TYPO3 13: *Admin Tools → Settings*) → paste the key into *Supertext API key*, or
 - **Environment variable:** `SUPERTEXT_API_KEY=...` (takes precedence over the backend setting — recommended for servers, as the key then stays out of the database and `config/system/settings.php`).
+
+TYPO3 asks you to confirm your password before opening *Settings*, and only system maintainers can open it.
+
+<img src="images/extension-configuration.png" alt="Extension Configuration for supertext_translation: Translate automatically, Supertext API key, API environment and custom API base URL" width="640">
 
 ## 4. Configure the site languages
 
-Each target language needs a locale in the site configuration (*Site Management → Sites*, or `config/sites/<site>/config.yaml`). The locale is sent to Supertext as the target language: `de_CH.UTF-8` → `de-CH`, `fr_FR.UTF-8` → `fr-FR`.
+Each target language needs a locale in the site configuration (*Sites → Setup → edit the site → Languages*; TYPO3 13: *Site Management → Sites*; or `config/sites/<site>/config.yaml`). The locale is sent to Supertext as the target language: `de_CH.UTF-8` → `de-CH`, `fr_FR.UTF-8` → `fr-FR`.
+
+![Site configuration, Languages tab: English (en-US), Deutsch (Schweiz) (de-CH) and Français (Suisse) (fr-CH)](images/site-languages.png)
 
 Optional per-language keys (edit the YAML directly):
 
@@ -67,7 +73,7 @@ languages:
 
 ## 5. Check it works
 
-Localize a page in the Page module (*Translate* button). After the wizard finishes you should see a green "Supertext translated N field(s)…" message. Or from the CLI:
+Localize a page in the Page module (language menu → *Create new translation*, see the [user guide](USER_GUIDE.md#translate-a-page)). After the wizard finishes you should see a green "Supertext translated N field(s)…" message. Or from the CLI:
 
 ```bash
 vendor/bin/typo3 supertext:localize <page-uid> <language-id>

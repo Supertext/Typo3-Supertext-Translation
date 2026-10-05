@@ -8,15 +8,32 @@ The Supertext TYPO3 demo (ask Supertext for the address and a backend login) has
 
 ## Translate a page
 
-1. Open the **Page** module and select the page.
-2. Switch the language selector at the top to the target language (or choose *Languages* view).
-3. If the page itself has no translation yet, click **Create new translation of this page** and choose the language.
-4. Click **Translate** in the column of the target language. In the wizard, pick:
-   - **Translate** (connected mode) — the translation stays linked to the original, the usual choice, or
-   - **Copy** (free mode) — an independent copy you can restructure freely.
-5. Select the content elements and finish the wizard.
+*Screenshots: TYPO3 14.3 with the Camino demo content.*
 
-A green message confirms what was translated, for example *"Supertext translated 9 field(s) in 6 record(s) into Deutsch (de-CH)."*
+1. Open **Content → Layout** and select the page in the page tree.
+2. Open the language menu at the top right (it shows the current language, e.g. *English*) and choose the target language under **Create new translation**.
+
+   ![Page module with the language menu open: "Create new translation" lists Deutsch (Schweiz) and Français (Suisse)](images/language-menu.png)
+
+3. TYPO3's **Localize** wizard opens. Choose the content elements to translate — all are selected by default — and click **Next**.
+
+   <img src="images/wizard-content.png" alt="Localize wizard, content selection: all content elements of the FAQs page selected" width="640">
+
+4. Choose how to localize:
+   - **Translate** (connected mode): the translation stays linked to the original. The usual choice.
+   - **Copy** (free mode): an independent copy you can restructure freely.
+
+   <img src="images/wizard-mode.png" alt="Localize wizard, mode: Translate selected, Copy as the alternative" width="640">
+
+5. Check the summary and click **Localize**. Supertext translates the page and the selected elements in this step; it usually takes a few seconds. Then click **Finish**.
+
+   <img src="images/wizard-confirm.png" alt="Localize wizard, confirmation: page FAQs, target language Deutsch (Schweiz), source language English and the content elements" width="640">
+
+The page opens in the new language with a green message confirming what Supertext translated, for example *"Supertext translated 30 field(s) in 14 record(s) into Deutsch (Schweiz) (de-CH)."*
+
+![The FAQ page in Deutsch (Schweiz) after translating: green Supertext message, page title "Häufige Fragen" and German content elements, still hidden for review](images/translated-page.png)
+
+**TYPO3 13.4** has no wizard for the page itself: first use **Create new translation of this page**, then the **Translate** button in the language column, which offers the same Translate/Copy choice. Supertext translates in both steps.
 
 ## Review and publish
 
