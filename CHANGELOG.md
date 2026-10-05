@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Fix: the API key now works whether it is entered with or without the `Supertext-Auth-Key ` prefix Supertext shows it with.
 - Docs: screenshots in the user and installation guides (TYPO3 14 Localize wizard, result, extension configuration, site languages), regenerated with `Tests/Docs/screenshots.mjs`; translation steps updated for TYPO3 14's wizard.
 - Fix: technical fields of image and file references (`tablenames`, `fieldname`, `table_local`) and link targets are no longer sent for translation. Translating them could detach images from translated content elements.
 - Demo: accounts from `DEMO_ADMIN_*` and `DEMO_EDITOR_*` variables, created on every boot if missing (`TYPO3_ADMIN_*` still work); the admin password is no longer passed on the command line.

@@ -44,7 +44,7 @@ Shared with the WordPress plugin and every other Supertext CMS plugin:
 3. `GET …/{file_id}/translation` → translated HTML
 4. `DELETE …/{file_id}` (files also expire after 24 h)
 
-Auth header: `Authorization: Supertext-Auth-Key <key>`. Base URLs: `https://api.supertext.com/v1/` (live), `api.staging…`, `api.testing…`.
+Auth header: `Authorization: Supertext-Auth-Key <key>`. The key may be configured with or without the `Supertext-Auth-Key ` prefix; the client strips it and always sends exactly one. The header name must be `Authorization` (the live API answers 403 to `Authentication`). Base URLs: `https://api.supertext.com/v1/` (live), `api.staging…`, `api.testing…`.
 
 ## Local development
 
@@ -155,4 +155,4 @@ Start from a database where the FAQ page has no German translation yet. Locally,
 - FlexForm fields and container/grid extensions are not translated yet.
 - No "retranslate" action for existing translations.
 - Human (professional) translation orders are not supported yet (the WordPress plugin has them).
-- Not yet tested on TYPO3 13.4 or against the live API.
+- Not yet tested on TYPO3 13.4.

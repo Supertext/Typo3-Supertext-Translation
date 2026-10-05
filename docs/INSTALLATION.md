@@ -50,6 +50,8 @@ Either:
 - **Backend:** *System → Settings → Extension Configuration → supertext_translation* (TYPO3 13: *Admin Tools → Settings*) → paste the key into *Supertext API key*, or
 - **Environment variable:** `SUPERTEXT_API_KEY=...` (takes precedence over the backend setting — recommended for servers, as the key then stays out of the database and `config/system/settings.php`).
 
+The key can be entered as Supertext shows it (`Supertext-Auth-Key …`) or without that prefix; both work.
+
 TYPO3 asks you to confirm your password before opening *Settings*, and only system maintainers can open it.
 
 <img src="images/extension-configuration.png" alt="Extension Configuration for supertext_translation: Translate automatically, Supertext API key, API environment and custom API base URL" width="640">
@@ -84,7 +86,7 @@ vendor/bin/typo3 supertext:localize <page-uid> <language-id>
 | Setting | Default | Purpose |
 | --- | --- | --- |
 | `enabled` | on | Translate automatically on localization |
-| `apiKey` | – | Supertext API key (`SUPERTEXT_API_KEY` wins) |
+| `apiKey` | – | Supertext API key, with or without the `Supertext-Auth-Key ` prefix (`SUPERTEXT_API_KEY` wins) |
 | `environment` | live | `live`, `staging` or `testing` API |
 | `endpoint` | – | Custom base URL (`SUPERTEXT_API_ENDPOINT` wins) |
 | `pollTimeout` | 180 s | Maximum wait per translation |

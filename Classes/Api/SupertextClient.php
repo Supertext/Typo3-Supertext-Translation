@@ -134,7 +134,8 @@ final class SupertextClient
     /** @param array<string, mixed> $options */
     private function request(string $method, string $path, array $options = []): ResponseInterface
     {
-        $apiKey = $this->settings->getApiKey();
+        // Accept the key with or without the "Supertext-Auth-Key " prefix Supertext shows it with.
+        $apiKey = (string)preg_replace('/^Supertext-Auth-Key\s+/i', '', trim($this->settings->getApiKey()));
         if ($apiKey === '') {
             throw new SupertextException('No Supertext API key configured (extension configuration or SUPERTEXT_API_KEY).', 1759500010);
         }
