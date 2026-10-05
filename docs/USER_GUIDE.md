@@ -35,6 +35,10 @@ The page opens in the new language with a green message confirming what Supertex
 
 **TYPO3 13.4** has no wizard for the page itself: first use **Create new translation of this page**, then the **Translate** button in the language column, which offers the same Translate/Copy choice. Supertext translates in both steps.
 
+## Translate content added later
+
+When the page already exists in the target language, translate new or missing content elements from **Display mode → Language Comparison**: the target language column has a **Translate** button that opens the same Localize wizard (it also asks which language to translate from when the page has several). Supertext translates the elements you select.
+
 ## Review and publish
 
 New translations are **hidden** — TYPO3's default — so nothing goes live unreviewed.
