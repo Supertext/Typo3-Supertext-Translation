@@ -12,6 +12,15 @@ use Supertext\Typo3Translation\Configuration\ExtensionSettings;
 final class FieldCollector
 {
     private const SYSTEM_FIELDS = ['l10n_diffsource', 'l18n_diffsource', 't3ver_label', 'TSconfig', 'tsconfig_includes', 'slug'];
+    /**
+     * Technical fields that TCA declares as plain text inputs. Translating them breaks
+     * records: e.g. sys_file_reference.fieldname "image" -> "Bild" detaches the image.
+     */
+    private const TECHNICAL_FIELDS = [
+        'sys_file_reference' => ['tablenames', 'fieldname', 'table_local'],
+        'pages' => ['target'],
+        'tt_content' => ['target'],
+    ];
     private const SKIPPED_RENDER_TYPES = ['codeEditor', 't3editor', 'colorpicker', 'belayoutwizard'];
 
     public function __construct(private readonly ExtensionSettings $settings) {}
@@ -32,7 +41,10 @@ final class FieldCollector
 
         $fields = [];
         foreach ($tca['columns'] ?? [] as $field => $column) {
-            if (in_array($field, self::SYSTEM_FIELDS, true) || !array_key_exists($field, $row)) {
+            if (in_array($field, self::SYSTEM_FIELDS, true)
+                || in_array($field, self::TECHNICAL_FIELDS[$table] ?? [], true)
+                || !array_key_exists($field, $row)
+            ) {
                 continue;
             }
             $config = array_replace_recursive($column['config'] ?? [], $overrides[$field]['config'] ?? []);

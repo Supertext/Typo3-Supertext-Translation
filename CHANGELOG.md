@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Fix: technical fields of image and file references (`tablenames`, `fieldname`, `table_local`) and link targets are no longer sent for translation. Translating them could detach images from translated content elements.
 - Demo: accounts from `DEMO_ADMIN_*` and `DEMO_EDITOR_*` variables, created on every boot if missing (`TYPO3_ADMIN_*` still work); the admin password is no longer passed on the command line.
 - Demo container (`demo/`): TYPO3 14.3 with Camino demo content in English, German and French, deployed to Railway on every push to `main`. Replaces the SSH deploy to demo.supertext.com.
 - CI workflow renamed to `ci.yml`; the SSH deploy job and its secrets are gone.

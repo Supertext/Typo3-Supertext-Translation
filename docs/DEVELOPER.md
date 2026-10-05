@@ -28,7 +28,7 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | --- | --- |
 | `Hooks\DataHandlerHook` | Collects every record localized in a DataHandler run (from `copyMappingArray`, so inline children like `sys_file_reference` are included), triggers translation in `afterFinish`, shows flash messages. |
 | `Service\TranslationService` | Groups segments per language pair, chunks at ~900k characters, writes results through a second DataHandler run (guarded by `TranslationService::$running` to avoid recursion), regenerates page slugs, keeps skipped code fields verbatim. |
-| `Service\FieldCollector` | TCA-driven field selection: `input`/`text`, not `l10n_mode=exclude`, not read-only, no numeric/date/email evals, no code editors; detects rich text. |
+| `Service\FieldCollector` | TCA-driven field selection: `input`/`text`, not `l10n_mode=exclude`, not read-only, no numeric/date/email evals, no code editors, no technical reference fields (`sys_file_reference.tablenames`/`fieldname`/`table_local`, link `target`); detects rich text. |
 | `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code` or locale `de-CH`), source (default language's primary subtag), politeness. |
 | `Api\HtmlDocument` | Builds `<div data-st-id="N">…</div>` documents and parses them back; plain text is escaped and line breaks travel as `<br>`. |
 | `Api\SupertextClient` | Supertext AI file translation API v1. |
