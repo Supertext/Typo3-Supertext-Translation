@@ -85,7 +85,7 @@ The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the
 | --- | --- |
 | `Dockerfile` | `php:8.3-apache` + extensions, `composer install` from the lock file, extension copied to `packages/supertext_translation` |
 | `composer.json`, `composer.lock` | The demo project (TYPO3 core packages, Camino, this extension via a path repository) |
-| `entrypoint.sh` | Keeps only Apache's prefork MPM (Railway otherwise fails with *More than one MPM loaded*), links persistent folders into `/data`, installs TYPO3 on first boot, runs `extension:setup` + `cache:flush` on every boot |
+| `entrypoint.sh` | Keeps only Apache's prefork MPM (Railway otherwise fails with *More than one MPM loaded*), links persistent folders into `/data`, installs TYPO3 on first boot, creates missing demo accounts and runs `extension:setup` + `cache:flush` on every boot |
 | `site-config.yaml` | Site configuration written on first boot (languages, `supertext_politeness`) |
 | `additional.php` | Reverse-proxy and trusted-host settings for Railway's TLS proxy |
 | `apache.conf`, `php.ini` | Web server and PHP settings |
@@ -96,20 +96,23 @@ The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the
 
 | Variable | |
 | --- | --- |
-| `TYPO3_ADMIN_PASSWORD` | Required for the first boot (creates the `admin` backend user). Not used afterwards. |
-| `TYPO3_ADMIN_USER`, `TYPO3_ADMIN_EMAIL`, `TYPO3_PROJECT_NAME` | Optional, first boot only |
+| `DEMO_ADMIN_EMAIL`, `DEMO_ADMIN_PASSWORD` | Admin backend user (the e-mail address is also the username). The password is required for the first boot, which installs TYPO3. Older names still work as fallbacks: `TYPO3_ADMIN_PASSWORD`, `TYPO3_ADMIN_USER` (default `admin`), `TYPO3_ADMIN_EMAIL`. |
+| `DEMO_EDITOR_EMAIL`, `DEMO_EDITOR_PASSWORD` | Optional second account, e.g. for automated tests and screenshots. TYPO3 ships no ready-made editor group, so it is an admin without maintainer rights (no Install Tool or system maintenance). |
+| `TYPO3_PROJECT_NAME` | Optional, first boot only |
 | `SUPERTEXT_API_KEY` | Supertext key used by the extension |
 | `SUPERTEXT_API_ENDPOINT` | Optional, e.g. the staging API |
 | `TYPO3_TRUSTED_HOSTS` | Optional regex of allowed host names (default: any); on the demo it lists the Railway domain **and `healthcheck.railway.app`** (the host Railway's healthcheck sends; without it every check gets a 500) |
 | `PORT` | Port Apache listens on; `8080` on Railway, matching the domain's target port |
 | `RAILWAY_DOCKERFILE_PATH` | `demo/Dockerfile` (the build context is the repo root) |
 
+**Demo accounts:** on every boot the entrypoint creates the `DEMO_ADMIN` and `DEMO_EDITOR` accounts if they don't exist yet, using TYPO3's `backend:user:create` with the values passed as environment variables (never on the command line). Existing accounts are never changed — to change a password, use the backend (*User settings* or *Backend users*). Passwords must meet TYPO3's password policy: at least 8 characters with an upper-case letter, a lower-case letter, a number and a special character. If one doesn't, that account is skipped and the log says which rule failed; the demo still starts.
+
 **Run it locally:**
 
 ```bash
 docker build -f demo/Dockerfile -t supertext-typo3-demo .
 docker run --rm -p 8080:80 -v typo3demo:/data \
-  -e TYPO3_ADMIN_PASSWORD='choose-one' -e SUPERTEXT_API_KEY=... supertext-typo3-demo
+  -e DEMO_ADMIN_EMAIL=you@example.com -e DEMO_ADMIN_PASSWORD='Choose-one1!' -e SUPERTEXT_API_KEY=... supertext-typo3-demo
 # frontend http://localhost:8080/  backend http://localhost:8080/typo3/
 ```
 
