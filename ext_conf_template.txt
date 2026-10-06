@@ -1,6 +1,6 @@
 # cat=basic/enable/010; type=boolean; label=Translate automatically: Run Supertext AI translation whenever pages or content elements are localized.
 enabled = 1
-# cat=basic/api/020; type=string; label=Supertext API key: From supertext.com > Integrations > API. The environment variable SUPERTEXT_API_KEY takes precedence.
+# cat=basic/api/020; type=string; label=Supertext API key: No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at supertext.com > Integrations > API (https://www.supertext.com/en/integrations/api, requires the Admin role). The environment variable SUPERTEXT_API_KEY takes precedence.
 apiKey =
 # cat=basic/api/030; type=options[live=live,staging=staging,testing=testing]; label=API environment
 environment = live

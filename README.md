@@ -31,6 +31,8 @@ vendor/bin/typo3 extension:setup -e supertext_translation
 # then set SUPERTEXT_API_KEY or the key in Extension Configuration
 ```
 
+You need a Supertext account ([log in or create one](https://www.supertext.com/person/en/account/signin)) and an API key from [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role in your Supertext account).
+
 ## Demo
 
 `demo/` builds a container with TYPO3 14.3, the Camino demo site (EN, DE-CH, FR-CH) and this extension. It's deployed to Railway on every push to `main` — details in the [developer guide](docs/DEVELOPER.md#demo-railway).

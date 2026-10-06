@@ -67,7 +67,7 @@ Your administrator can set each language to formal (*Sie/vous*) or informal (*du
 
 ## When something goes wrong
 
-If Supertext can't translate (no API key, network problem, quota reached), you'll see a yellow warning. The records are still created — as untranslated copies with TYPO3's usual *[Translate to …]* prefix — so you can translate by hand, or delete them and try again later.
+If Supertext can't translate (no API key, network problem, quota reached), you'll see a yellow warning. The records are still created — as untranslated copies with TYPO3's usual *[Translate to …]* prefix — so you can translate by hand, or delete them and try again later. A missing or rejected API key is for your administrator to fix (see the [installation guide](INSTALLATION.md#3-set-the-api-key)).
 
 ## Tips
 

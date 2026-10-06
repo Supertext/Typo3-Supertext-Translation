@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Docs/UI: the *Supertext API key* setting, the missing-key and authentication-failed messages, the installation guide, README and demo `.env.example` now link to Supertext account signup and API key generation (supertext.com → Integrations → API, Admin role required).
 - Docs: how to translate content added after the page translation (Language Comparison → Translate).
 - Fix: translating into several languages at once no longer fails with *Too many requests*: requests that hit Supertext's per-second rate limit are retried automatically.
 - Fix: the API key now works whether it is entered with or without the `Supertext-Auth-Key ` prefix Supertext shows it with.

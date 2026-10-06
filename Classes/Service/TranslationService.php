@@ -42,7 +42,7 @@ final class TranslationService
     {
         $result = new TranslationResult();
         if (!$this->client->hasApiKey()) {
-            $result->errors[] = 'No Supertext API key configured. Records were localized but not translated.';
+            $result->errors[] = 'No Supertext API key configured. Records were localized but not translated. Generate a key at https://www.supertext.com/en/integrations/api (requires the Admin role) and enter it in the extension configuration.';
             return $result;
         }
 

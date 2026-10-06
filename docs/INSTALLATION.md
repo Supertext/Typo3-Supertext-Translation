@@ -13,7 +13,7 @@ A ready-to-run container with TYPO3 14.3, demo content in English, German and Fr
 | TYPO3 | 14.3 LTS (tested), 13.4 LTS (supported, not yet tested) |
 | PHP | 8.2 or newer, with `ext-dom` |
 | Install mode | Composer-based TYPO3 (classic/non-Composer installs are not supported yet) |
-| Supertext | An account with an API key (supertext.com → Integrations → API) |
+| Supertext | An account with an API key — see [step 3](#3-set-the-api-key) |
 | Network | The web server must reach `https://api.supertext.com` over HTTPS |
 
 ## 1. Add the package
@@ -45,7 +45,12 @@ vendor/bin/typo3 cache:flush
 
 ## 3. Set the API key
 
-Either:
+**Get a key first:**
+
+1. No Supertext account yet? [Log in or create a Supertext account](https://www.supertext.com/person/en/account/signin) with your e-mail address.
+2. Generate your API key at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api). This needs the **Admin** role in your Supertext account; if you don't have it, ask your account's admin to create the key.
+
+**Then enter it** — either:
 
 - **Backend:** *System → Settings → Extension Configuration → supertext_translation* (TYPO3 13: *Admin Tools → Settings*) → paste the key into *Supertext API key*, or
 - **Environment variable:** `SUPERTEXT_API_KEY=...` (takes precedence over the backend setting — recommended for servers, as the key then stays out of the database and `config/system/settings.php`).
@@ -116,8 +121,8 @@ Existing translations stay untouched; only automatic translation stops.
 | Message | Cause / fix |
 | --- | --- |
 | *Too many requests to Supertext* | The API's per-second limit was still exceeded after 4 automatic retries. Wait a moment and translate again. |
-| *No Supertext API key configured* | Set the key (step 3). Records were still localized as plain copies. |
-| *Authentication failed* | The key is wrong or revoked. |
+| *No Supertext API key configured* | Set the key (step 3); generate one at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api). Records were still localized as plain copies. |
+| *Authentication failed* | The key is wrong or revoked. Check it, or generate a new one at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (Admin role required). |
 | *has no site language N* | The page isn't inside a site, or the language isn't defined in that site's configuration. |
 | *Timed out waiting* | Very large pages; raise `pollTimeout` (and PHP's `max_execution_time`). |
 | *Could not reach Supertext* | The server can't make outbound HTTPS calls; check firewall/proxy (`$GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy']`). |
