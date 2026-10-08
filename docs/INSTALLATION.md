@@ -61,6 +61,10 @@ TYPO3 asks you to confirm your password before opening *Settings*, and only syst
 
 <img src="images/extension-configuration.png" alt="Extension Configuration for supertext_translation: Translate automatically, Supertext API key, API environment and custom API base URL" width="640">
 
+### Interface languages
+
+The extension's own texts (the settings in the extension configuration and the success and warning messages after a translation) are available in English, German, French and Italian. They follow each backend user's interface language: *User settings* (user menu → *User Settings*) → *Personal data* → *Language*. The language pack for that language must be installed (*Maintenance → Manage Language Packs*), otherwise TYPO3 shows English. Other languages fall back to English.
+
 ## 4. Configure the site languages
 
 Each target language needs a locale in the site configuration (*Sites → Setup → edit the site → Languages*; TYPO3 13: *Site Management → Sites*; or `config/sites/<site>/config.yaml`). The locale is sent to Supertext as the target language: `de_CH.UTF-8` → `de-CH`, `fr_FR.UTF-8` → `fr-FR`.

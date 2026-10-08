@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Supertext\Typo3Translation\Command;
 
 use Supertext\Typo3Translation\Hooks\DataHandlerHook;
+use Supertext\Typo3Translation\Localization\Labels;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -75,7 +76,7 @@ final class LocalizeCommand extends Command
             $output->writeln('No Supertext translation ran: nothing new was localized, or the extension is disabled.');
             return Command::SUCCESS;
         }
-        $output->writeln($result->summary());
+        $output->writeln($result->summary(Labels::forUser($GLOBALS['BE_USER'] ?? null)));
         foreach ($result->errors as $error) {
             $output->writeln('<comment>' . $error . '</comment>');
         }

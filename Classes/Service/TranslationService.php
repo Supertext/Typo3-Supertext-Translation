@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Supertext\Typo3Translation\Api\HtmlDocument;
 use Supertext\Typo3Translation\Api\SupertextClient;
 use Supertext\Typo3Translation\Configuration\ExtensionSettings;
+use Supertext\Typo3Translation\Localization\Labels;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
@@ -41,8 +42,9 @@ final class TranslationService
     public function translate(array $jobs, BackendUserAuthentication $backendUser): TranslationResult
     {
         $result = new TranslationResult();
+        $labels = Labels::forUser($backendUser);
         if (!$this->client->hasApiKey()) {
-            $result->errors[] = 'No Supertext API key configured. Records were localized but not translated. Generate a key at https://www.supertext.com/en/integrations/api (requires the Admin role) and enter it in the extension configuration.';
+            $result->errors[] = $labels->get('error.noApiKey');
             return $result;
         }
 
@@ -58,7 +60,7 @@ final class TranslationService
             $pageId = $job['table'] === 'pages' ? $job['source'] : (int)$source['pid'];
             $language = $this->languageResolver->resolve($pageId, $job['language']);
             if ($language === null) {
-                $result->errors[] = sprintf('%s:%d has no site language %d; skipped.', $job['table'], $job['source'], $job['language']);
+                $result->errors[] = $labels->get('error.noSiteLanguage', $job['table'], $job['source'], $job['language']);
                 continue;
             }
             $key = $language['target'] . '|' . $language['source'] . '|' . $language['politeness'];
@@ -94,7 +96,7 @@ final class TranslationService
                     $translated = $this->translateChunk($chunk, $language);
                 } catch (\Throwable $e) {
                     $this->logger->error('Supertext translation failed', ['exception' => $e, 'language' => $language['target']]);
-                    $result->errors[] = sprintf('%s: %s', $language['title'], $e->getMessage());
+                    $result->errors[] = sprintf('%s: %s', $language['title'], $labels->forException($e));
                     continue;
                 }
                 foreach ($chunk as $i => $segment) {

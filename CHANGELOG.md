@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added: French and Italian interface (and German where it was missing): the extension configuration and the messages after a translation follow the backend user's language. The authentication-failed message now also links to Supertext account signup.
+
 ## 0.1.0 — 2026-10-07
 
 - First version: Supertext AI translation on localization (Page module wizard, new translation, List module, CLI).

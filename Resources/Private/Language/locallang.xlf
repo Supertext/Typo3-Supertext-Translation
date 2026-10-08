@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" datatype="plaintext" original="EXT:supertext_translation/Resources/Private/Language/locallang.xlf" product-name="supertext_translation">
+		<header/>
+		<body>
+			<trans-unit id="settings.enabled">
+				<source>Translate automatically: Run Supertext AI translation whenever pages or content elements are localized.</source>
+			</trans-unit>
+			<trans-unit id="settings.apiKey">
+				<source>Supertext API key: No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at supertext.com &gt; Integrations &gt; API (https://www.supertext.com/en/integrations/api, requires the Admin role). The environment variable SUPERTEXT_API_KEY takes precedence.</source>
+			</trans-unit>
+			<trans-unit id="settings.environment">
+				<source>API environment</source>
+			</trans-unit>
+			<trans-unit id="settings.endpoint">
+				<source>Custom API base URL: Overrides the environment when set (e.g. https://api.supertext.com/v1/).</source>
+			</trans-unit>
+			<trans-unit id="settings.pollTimeout">
+				<source>Polling timeout (seconds): Maximum time to wait for a translation.</source>
+			</trans-unit>
+			<trans-unit id="settings.pollInterval">
+				<source>Polling interval (seconds)</source>
+			</trans-unit>
+			<trans-unit id="settings.skipBodytextCTypes">
+				<source>Skip bodytext for these content types: Comma-separated CTypes whose bodytext is code, not prose.</source>
+			</trans-unit>
+			<trans-unit id="settings.regenerateSlugs">
+				<source>Regenerate page slugs: Build the URL segment of a translated page from its translated title.</source>
+			</trans-unit>
+			<trans-unit id="result.nothing">
+				<source>Nothing was translated.</source>
+			</trans-unit>
+			<trans-unit id="result.summary">
+				<source>Supertext translated %d field(s) in %d record(s) into %s.</source>
+			</trans-unit>
+			<trans-unit id="error.noApiKey">
+				<source>No Supertext API key configured. Records were localized but not translated. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, requires the Admin role) and enter it in the extension configuration.</source>
+			</trans-unit>
+			<trans-unit id="error.noSiteLanguage">
+				<source>%s:%d has no site language %d; skipped.</source>
+			</trans-unit>
+			<trans-unit id="error.noFileId">
+				<source>Supertext did not return a file id.</source>
+			</trans-unit>
+			<trans-unit id="error.failed">
+				<source>Supertext failed to translate the document.</source>
+			</trans-unit>
+			<trans-unit id="error.limitExceeded">
+				<source>Your Supertext translation limit is exceeded.</source>
+			</trans-unit>
+			<trans-unit id="error.deleted">
+				<source>The Supertext file was deleted before it could be downloaded.</source>
+			</trans-unit>
+			<trans-unit id="error.timeout">
+				<source>Timed out waiting for the Supertext translation.</source>
+			</trans-unit>
+			<trans-unit id="error.empty">
+				<source>The translated document was empty.</source>
+			</trans-unit>
+			<trans-unit id="error.unreachable">
+				<source>Could not reach Supertext: %s</source>
+			</trans-unit>
+			<trans-unit id="error.authentication">
+				<source>Authentication failed. Please check the Supertext API key. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, requires the Admin role).</source>
+			</trans-unit>
+			<trans-unit id="error.notFound">
+				<source>The requested Supertext resource was not found.</source>
+			</trans-unit>
+			<trans-unit id="error.tooLarge">
+				<source>The content is too large for Supertext to translate in one go.</source>
+			</trans-unit>
+			<trans-unit id="error.rateLimit">
+				<source>Too many requests to Supertext. Please try again shortly.</source>
+			</trans-unit>
+			<trans-unit id="error.unavailable">
+				<source>The Supertext service is currently unavailable.</source>
+			</trans-unit>
+			<trans-unit id="error.http">
+				<source>Supertext answered with HTTP %d.</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

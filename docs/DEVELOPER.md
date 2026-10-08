@@ -33,6 +33,7 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Api\HtmlDocument` | Builds `<div data-st-id="N">…</div>` documents and parses them back; plain text is escaped and line breaks travel as `<br>`. |
 | `Api\SupertextClient` | Supertext AI file translation API v1. |
 | `Command\LocalizeCommand` | `supertext:localize <page> <language> [--recursive]`. |
+| `Localization\Labels` | Messages in the backend user's language from `Resources/Private/Language/locallang.xlf`; translates `Api\SupertextException`s by their `labelKey`. |
 | `Configuration\ExtensionSettings` | Typed extension configuration plus `SUPERTEXT_API_KEY` / `SUPERTEXT_API_ENDPOINT` env overrides. |
 
 ## Supertext API protocol
@@ -71,9 +72,10 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at a mock that implem
 
 ```bash
 php Tests/HtmlDocumentTest.php   # HTML packing round trip, no TYPO3 needed
+php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs)
 ```
 
-CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs the test and syntax-checks the demo entrypoint on every push and pull request.
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs both tests and syntax-checks the demo entrypoint on every push and pull request.
 
 ## Demo (Railway)
 
@@ -151,6 +153,7 @@ Releases are published by `.github/workflows/release.yml` when the version is of
 
 - Strict types, final classes, constructor injection (`Configuration/Services.yaml`).
 - Exception codes are Unix timestamps (`1759500xxx` range for the API client).
+- Interface strings live in `Resources/Private/Language/locallang.xlf` (English source) with `de.`, `fr.` and `it.locallang.xlf` (XLIFF 1.2, `approved="yes"`). `ext_conf_template.txt` labels are `LLL:` references (`Title: description`, split at the first colon); runtime messages go through `Localization\Labels`; `Api\` stays free of TYPO3 classes and only names the label (`SupertextException::$labelKey`). New or changed strings need all four languages in the same commit (formal Sie/vous/Lei, TYPO3's own terms, "Supertext", placeholders and URLs unchanged); `Tests/LanguageFilesTest.php` checks keys, placeholders and URLs.
 - Keep the three docs in `docs/` current with every change (see `CLAUDE.md`).
 
 ## Known limitations / roadmap

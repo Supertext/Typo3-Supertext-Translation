@@ -84,7 +84,7 @@ final class SupertextClient
         $data = $this->json($this->request('POST', 'translate/ai/file', ['multipart' => $multipart]));
         $fileId = (string)($data['file_id'] ?? '');
         if ($fileId === '') {
-            throw new SupertextException('Supertext did not return a file id.', 1759500001);
+            throw new SupertextException('Supertext did not return a file id.', 1759500001, 'error.noFileId');
         }
         return $fileId;
     }
@@ -104,23 +104,23 @@ final class SupertextClient
                 case 'done':
                     return;
                 case 'error':
-                    throw new SupertextException('Supertext failed to translate the document.', 1759500002);
+                    throw new SupertextException('Supertext failed to translate the document.', 1759500002, 'error.failed');
                 case 'limit_exceeded':
-                    throw new SupertextException('Your Supertext translation limit is exceeded.', 1759500003);
+                    throw new SupertextException('Your Supertext translation limit is exceeded.', 1759500003, 'error.limitExceeded');
                 case 'deleted':
-                    throw new SupertextException('The Supertext file was deleted before it could be downloaded.', 1759500004);
+                    throw new SupertextException('The Supertext file was deleted before it could be downloaded.', 1759500004, 'error.deleted');
             }
             sleep($interval);
         } while (time() < $deadline);
 
-        throw new SupertextException('Timed out waiting for the Supertext translation.', 1759500005);
+        throw new SupertextException('Timed out waiting for the Supertext translation.', 1759500005, 'error.timeout');
     }
 
     private function download(string $fileId): string
     {
         $body = (string)$this->request('GET', 'translate/ai/file/' . rawurlencode($fileId) . '/translation')->getBody();
         if (trim($body) === '') {
-            throw new SupertextException('The translated document was empty.', 1759500006);
+            throw new SupertextException('The translated document was empty.', 1759500006, 'error.empty');
         }
         return $body;
     }
@@ -140,7 +140,7 @@ final class SupertextClient
         // Accept the key with or without the "Supertext-Auth-Key " prefix Supertext shows it with.
         $apiKey = (string)preg_replace('/^Supertext-Auth-Key\s+/i', '', trim($this->settings->getApiKey()));
         if ($apiKey === '') {
-            throw new SupertextException('No Supertext API key configured (extension configuration or SUPERTEXT_API_KEY). Generate one at https://www.supertext.com/en/integrations/api.', 1759500010);
+            throw new SupertextException('No Supertext API key configured (extension configuration or SUPERTEXT_API_KEY). No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at https://www.supertext.com/en/integrations/api (requires the Admin role).', 1759500010, 'error.noApiKey');
         }
         $options['headers'] = array_merge($options['headers'] ?? [], [
             'Authorization' => 'Supertext-Auth-Key ' . $apiKey,
@@ -154,7 +154,7 @@ final class SupertextClient
             try {
                 $response = $this->requestFactory->request($this->settings->getBaseUrl() . ltrim($path, '/'), $method, $options);
             } catch (\Throwable $e) {
-                throw new SupertextException('Could not reach Supertext: ' . $e->getMessage(), 1759500011, $e);
+                throw new SupertextException('Could not reach Supertext: ' . $e->getMessage(), 1759500011, 'error.unreachable', [$e->getMessage()], '', $e);
             }
             if ($response->getStatusCode() !== 429 || $attempt >= self::RATE_LIMIT_RETRIES) {
                 break;
@@ -168,19 +168,16 @@ final class SupertextClient
         if ($code >= 200 && $code < 300) {
             return $response;
         }
-        $message = match (true) {
-            $code === 401, $code === 403 => 'Authentication failed. Please check the Supertext API key (manage keys at https://www.supertext.com/en/integrations/api).',
-            $code === 404 => 'The requested Supertext resource was not found.',
-            $code === 413 => 'The content is too large for Supertext to translate in one go.',
-            $code === 429 => 'Too many requests to Supertext. Please try again shortly.',
-            $code >= 500 => 'The Supertext service is currently unavailable.',
-            default => sprintf('Supertext answered with HTTP %d.', $code),
+        [$message, $labelKey, $arguments] = match (true) {
+            $code === 401, $code === 403 => ['Authentication failed. Please check the Supertext API key. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at https://www.supertext.com/en/integrations/api (requires the Admin role).', 'error.authentication', []],
+            $code === 404 => ['The requested Supertext resource was not found.', 'error.notFound', []],
+            $code === 413 => ['The content is too large for Supertext to translate in one go.', 'error.tooLarge', []],
+            $code === 429 => ['Too many requests to Supertext. Please try again shortly.', 'error.rateLimit', []],
+            $code >= 500 => ['The Supertext service is currently unavailable.', 'error.unavailable', []],
+            default => [sprintf('Supertext answered with HTTP %d.', $code), 'error.http', [$code]],
         };
-        $detail = trim(strip_tags((string)$response->getBody()));
-        if ($detail !== '') {
-            $message .= ' (' . mb_substr($detail, 0, 200) . ')';
-        }
-        throw new SupertextException($message, 1759500012);
+        $detail = mb_substr(trim(strip_tags((string)$response->getBody())), 0, 200);
+        throw new SupertextException($message, 1759500012, $labelKey, $arguments, $detail);
     }
 
     /** @return array<string, mixed> */

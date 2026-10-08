@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Supertext\Typo3Translation\Hooks;
 
 use Supertext\Typo3Translation\Configuration\ExtensionSettings;
+use Supertext\Typo3Translation\Localization\Labels;
 use Supertext\Typo3Translation\Service\TranslationResult;
 use Supertext\Typo3Translation\Service\TranslationService;
 use TYPO3\CMS\Core\Core\Environment;
@@ -73,7 +74,7 @@ final class DataHandlerHook
         }
         $queue = $this->flashMessageService->getMessageQueueByIdentifier();
         if ($result->records !== []) {
-            $queue->enqueue(new FlashMessage($result->summary(), 'Supertext', ContextualFeedbackSeverity::OK, true));
+            $queue->enqueue(new FlashMessage($result->summary(Labels::forUser($dataHandler->BE_USER)), 'Supertext', ContextualFeedbackSeverity::OK, true));
         }
         foreach ($result->errors as $error) {
             $queue->enqueue(new FlashMessage($error, 'Supertext', ContextualFeedbackSeverity::WARNING, true));

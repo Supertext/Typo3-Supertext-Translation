@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" target-language="de" datatype="plaintext" original="EXT:supertext_translation/Resources/Private/Language/locallang.xlf" product-name="supertext_translation">
+		<header/>
+		<body>
+			<trans-unit id="settings.enabled" approved="yes">
+				<source>Translate automatically: Run Supertext AI translation whenever pages or content elements are localized.</source>
+				<target>Automatisch übersetzen: Seiten und Inhaltselemente bei jeder Lokalisierung mit Supertext AI übersetzen.</target>
+			</trans-unit>
+			<trans-unit id="settings.apiKey" approved="yes">
+				<source>Supertext API key: No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at supertext.com &gt; Integrations &gt; API (https://www.supertext.com/en/integrations/api, requires the Admin role). The environment variable SUPERTEXT_API_KEY takes precedence.</source>
+				<target>Supertext-API-Schlüssel: Noch kein Supertext-Konto? Erstellen Sie eines unter https://www.supertext.com/person/en/account/signin . Generieren Sie Ihren API-Schlüssel unter supertext.com &gt; Integrations &gt; API (https://www.supertext.com/en/integrations/api, erfordert die Admin-Rolle). Die Umgebungsvariable SUPERTEXT_API_KEY hat Vorrang.</target>
+			</trans-unit>
+			<trans-unit id="settings.environment" approved="yes">
+				<source>API environment</source>
+				<target>API-Umgebung</target>
+			</trans-unit>
+			<trans-unit id="settings.endpoint" approved="yes">
+				<source>Custom API base URL: Overrides the environment when set (e.g. https://api.supertext.com/v1/).</source>
+				<target>Eigene API-Basis-URL: Ersetzt die Umgebung, wenn gesetzt (z. B. https://api.supertext.com/v1/).</target>
+			</trans-unit>
+			<trans-unit id="settings.pollTimeout" approved="yes">
+				<source>Polling timeout (seconds): Maximum time to wait for a translation.</source>
+				<target>Abfrage-Timeout (Sekunden): Maximale Wartezeit auf eine Übersetzung.</target>
+			</trans-unit>
+			<trans-unit id="settings.pollInterval" approved="yes">
+				<source>Polling interval (seconds)</source>
+				<target>Abfrageintervall (Sekunden)</target>
+			</trans-unit>
+			<trans-unit id="settings.skipBodytextCTypes" approved="yes">
+				<source>Skip bodytext for these content types: Comma-separated CTypes whose bodytext is code, not prose.</source>
+				<target>Bodytext bei diesen Inhaltstypen überspringen: Kommagetrennte CTypes, deren Bodytext Code und kein Fliesstext ist.</target>
+			</trans-unit>
+			<trans-unit id="settings.regenerateSlugs" approved="yes">
+				<source>Regenerate page slugs: Build the URL segment of a translated page from its translated title.</source>
+				<target>URL-Segmente neu erzeugen: Das URL-Segment einer übersetzten Seite aus ihrem übersetzten Titel bilden.</target>
+			</trans-unit>
+			<trans-unit id="result.nothing" approved="yes">
+				<source>Nothing was translated.</source>
+				<target>Es wurde nichts übersetzt.</target>
+			</trans-unit>
+			<trans-unit id="result.summary" approved="yes">
+				<source>Supertext translated %d field(s) in %d record(s) into %s.</source>
+				<target>Supertext hat %d Feld(er) in %d Datensatz/Datensätzen übersetzt. Sprachen: %s.</target>
+			</trans-unit>
+			<trans-unit id="error.noApiKey" approved="yes">
+				<source>No Supertext API key configured. Records were localized but not translated. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, requires the Admin role) and enter it in the extension configuration.</source>
+				<target>Kein Supertext-API-Schlüssel konfiguriert. Die Datensätze wurden lokalisiert, aber nicht übersetzt. Noch kein Supertext-Konto? Erstellen Sie eines unter https://www.supertext.com/person/en/account/signin . Generieren Sie Ihren API-Schlüssel unter https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, erfordert die Admin-Rolle) und tragen Sie ihn in der Erweiterungskonfiguration ein.</target>
+			</trans-unit>
+			<trans-unit id="error.noSiteLanguage" approved="yes">
+				<source>%s:%d has no site language %d; skipped.</source>
+				<target>%s:%d hat keine Website-Sprache %d; übersprungen.</target>
+			</trans-unit>
+			<trans-unit id="error.noFileId" approved="yes">
+				<source>Supertext did not return a file id.</source>
+				<target>Supertext hat keine Datei-ID zurückgegeben.</target>
+			</trans-unit>
+			<trans-unit id="error.failed" approved="yes">
+				<source>Supertext failed to translate the document.</source>
+				<target>Supertext konnte das Dokument nicht übersetzen.</target>
+			</trans-unit>
+			<trans-unit id="error.limitExceeded" approved="yes">
+				<source>Your Supertext translation limit is exceeded.</source>
+				<target>Ihr Supertext-Übersetzungslimit ist überschritten.</target>
+			</trans-unit>
+			<trans-unit id="error.deleted" approved="yes">
+				<source>The Supertext file was deleted before it could be downloaded.</source>
+				<target>Die Supertext-Datei wurde gelöscht, bevor sie heruntergeladen werden konnte.</target>
+			</trans-unit>
+			<trans-unit id="error.timeout" approved="yes">
+				<source>Timed out waiting for the Supertext translation.</source>
+				<target>Zeitüberschreitung beim Warten auf die Supertext-Übersetzung.</target>
+			</trans-unit>
+			<trans-unit id="error.empty" approved="yes">
+				<source>The translated document was empty.</source>
+				<target>Das übersetzte Dokument war leer.</target>
+			</trans-unit>
+			<trans-unit id="error.unreachable" approved="yes">
+				<source>Could not reach Supertext: %s</source>
+				<target>Supertext ist nicht erreichbar: %s</target>
+			</trans-unit>
+			<trans-unit id="error.authentication" approved="yes">
+				<source>Authentication failed. Please check the Supertext API key. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, requires the Admin role).</source>
+				<target>Authentifizierung fehlgeschlagen. Bitte prüfen Sie den Supertext-API-Schlüssel. Noch kein Supertext-Konto? Erstellen Sie eines unter https://www.supertext.com/person/en/account/signin . Generieren Sie Ihren API-Schlüssel unter https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, erfordert die Admin-Rolle).</target>
+			</trans-unit>
+			<trans-unit id="error.notFound" approved="yes">
+				<source>The requested Supertext resource was not found.</source>
+				<target>Die angeforderte Supertext-Ressource wurde nicht gefunden.</target>
+			</trans-unit>
+			<trans-unit id="error.tooLarge" approved="yes">
+				<source>The content is too large for Supertext to translate in one go.</source>
+				<target>Der Inhalt ist zu gross, um von Supertext in einem Durchgang übersetzt zu werden.</target>
+			</trans-unit>
+			<trans-unit id="error.rateLimit" approved="yes">
+				<source>Too many requests to Supertext. Please try again shortly.</source>
+				<target>Zu viele Anfragen an Supertext. Bitte versuchen Sie es in Kürze erneut.</target>
+			</trans-unit>
+			<trans-unit id="error.unavailable" approved="yes">
+				<source>The Supertext service is currently unavailable.</source>
+				<target>Der Supertext-Dienst ist zurzeit nicht verfügbar.</target>
+			</trans-unit>
+			<trans-unit id="error.http" approved="yes">
+				<source>Supertext answered with HTTP %d.</source>
+				<target>Supertext hat mit HTTP %d geantwortet.</target>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>
