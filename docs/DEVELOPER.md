@@ -75,7 +75,7 @@ php Tests/HtmlDocumentTest.php   # HTML packing round trip, no TYPO3 needed
 php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs)
 ```
 
-CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs both tests and syntax-checks the demo entrypoint on every push and pull request.
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs both tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
 
 ## Demo (Railway)
 
@@ -140,6 +140,15 @@ BASE_URL=http://127.0.0.1:8090 DEMO_ADMIN_EMAIL=... DEMO_ADMIN_PASSWORD=... npm 
 ```
 
 Start from a database where the FAQ page has no German translation yet. Locally, drop `demo/additional.php`: its reverse-proxy settings make TYPO3 redirect to HTTPS.
+
+## Code quality and security checks
+
+- **Checks** workflow (`.github/workflows/checks.yml`): actionlint and zizmor lint the workflows on every push and pull request; dependency review fails a pull request that adds a package with a known vulnerability (moderate or worse). Third-party actions are pinned to commit SHAs (Dependabot keeps them current), the default token is read-only and checkouts don't keep credentials. Locally: `pip install actionlint-py zizmor`, then `actionlint` and `zizmor .github/workflows` in the repo root.
+- **Links** workflow (`.github/workflows/links.yml`): lychee checks all Markdown links weekly and whenever docs change on `main`. Broken links open (or update) the issue "Broken links in the docs". Links that can't work from CI (local URLs, placeholders, pages behind a login) are excluded in `.lycheeignore`.
+- **PHPStan** (job *PHPStan* in `.github/workflows/ci.yml`, config `phpstan.neon`): level 5 over `Classes/` and `ext_localconf.php`. The job runs `composer install`, which installs TYPO3 core and PHPStan as dev dependencies, so PHPStan knows TYPO3's classes. Locally: `composer install && vendor/bin/phpstan analyse`. Findings that were there when PHPStan was introduced and aren't simple to fix are listed in `phpstan-baseline.neon` (regenerate with `vendor/bin/phpstan analyse --generate-baseline` only after fixing some, never to hide new ones); new code must pass without additions to it.
+- **GitHub settings** (set by Remy's setup script, not in the repo): secret scanning with push protection (a push containing a known token format is rejected; findings under *Security → Secret scanning*) and CodeQL default setup (findings under *Security → Code scanning* and as pull request comments). CodeQL doesn't cover PHP, which is why this repo runs PHPStan.
+
+Before starting work in this repo, look at its open findings: code scanning alerts, secret scanning alerts, Dependabot pull requests and the issue "Broken links in the docs".
 
 ## Releasing
 

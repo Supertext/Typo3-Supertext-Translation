@@ -1,5 +1,8 @@
 # PHPStan: see docs/DEVELOPER.md → Code quality and security checks.
 # Run with `composer install && vendor/bin/phpstan analyse` (installs TYPO3 core as a dev dependency).
+includes:
+    - phpstan-baseline.neon
+
 parameters:
     level: 5
     paths:

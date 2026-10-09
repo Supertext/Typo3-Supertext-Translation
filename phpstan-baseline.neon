@@ -1,0 +1,8 @@
+parameters:
+	ignoreErrors:
+		-
+			# DataHandler declares $BE_USER as non-nullable; the check stays as a guard for contexts without a backend user.
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: Classes/Hooks/DataHandlerHook.php

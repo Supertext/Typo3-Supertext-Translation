@@ -21,7 +21,7 @@ use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
  */
 final class DataHandlerHook
 {
-    /** @var array<int, list<array{table: string, source: int, target: int, language: int}>> */
+    /** @var array<int, array<string, array{table: string, source: int, target: int, language: int}>> */
     private array $pending = [];
 
     private ?TranslationResult $lastResult = null;
