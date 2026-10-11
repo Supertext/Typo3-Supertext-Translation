@@ -67,7 +67,7 @@ The extension's own texts (the settings in the extension configuration and the s
 
 ## 4. Configure the site languages
 
-Each target language needs a locale in the site configuration (*Sites → Setup → edit the site → Languages*; TYPO3 13: *Site Management → Sites*; or `config/sites/<site>/config.yaml`). The locale is sent to Supertext as the target language: `de_CH.UTF-8` → `de-CH`, `fr_FR.UTF-8` → `fr-FR`.
+Each target language needs a locale in the site configuration (*Sites → Setup → edit the site → Languages*; TYPO3 13: *Site Management → Sites*; or `config/sites/<site>/config.yaml`). The locale is sent to Supertext as the target language: `de_CH.UTF-8` → `de-CH`, `fr_FR.UTF-8` → `fr-FR`. Supertext needs a region for target languages, so a locale without one gets a default: `de` → `de-DE`, `fr` → `fr-FR`, `en` → `en-US`, `it` → `it-IT` (full list in the [developer guide](DEVELOPER.md#language-codes)); set `supertext_code` for another region. The default language is sent as the source without region (`en_US.UTF-8` → `en`).
 
 ![Site configuration, Languages tab: English (en-US), Deutsch (Schweiz) (de-CH) and Français (Suisse) (fr-CH)](images/site-languages.png)
 
@@ -78,7 +78,7 @@ languages:
   -
     languageId: 1
     locale: de_CH.UTF-8
-    supertext_code: de-CH          # override the code sent to Supertext
+    supertext_code: de-CH          # override the target code sent to Supertext (include the region)
     supertext_politeness: more     # more = formal (Sie/vous), less = informal (du/tu)
 ```
 

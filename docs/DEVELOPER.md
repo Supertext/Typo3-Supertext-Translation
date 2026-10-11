@@ -29,7 +29,8 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Hooks\DataHandlerHook` | Collects every record localized in a DataHandler run (from `copyMappingArray`, so inline children like `sys_file_reference` are included), triggers translation in `afterFinish`, shows flash messages. |
 | `Service\TranslationService` | Groups segments per language pair, chunks at ~900k characters, writes results through a second DataHandler run (guarded by `TranslationService::$running` to avoid recursion), regenerates page slugs, keeps skipped code fields verbatim. |
 | `Service\FieldCollector` | TCA-driven field selection: `input`/`text`, not `l10n_mode=exclude`, not read-only, no numeric/date/email evals, no code editors, no technical reference fields (`sys_file_reference.tablenames`/`fieldname`/`table_local`, link `target`); detects rich text. |
-| `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code` or locale `de-CH`), source (default language's primary subtag), politeness. |
+| `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code` or the locale, see *Language codes*), source (default language's bare language), politeness. |
+| `Api\LanguageCodes` | The language code rules (bare source, regional target with defaults); no TYPO3 classes. |
 | `Api\HtmlDocument` | Builds `<div data-st-id="N">…</div>` documents and parses them back; plain text is escaped and line breaks travel as `<br>`. |
 | `Api\SupertextClient` | Supertext AI file translation API v1. |
 | `Command\LocalizeCommand` | `supertext:localize <page> <language> [--recursive]`. |
@@ -40,7 +41,7 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 
 Shared with the WordPress plugin and every other Supertext CMS plugin:
 
-1. `POST {base}translate/ai/file` — multipart: `file` (part `Content-Type` exactly `text/html`, no charset, or the API answers 415), `target_lang` (BCP-47, e.g. `de-CH`), optional `source_lang` (primary subtag only, e.g. `de`), optional `politeness` (`more`/`less`) → `{file_id}`
+1. `POST {base}translate/ai/file` — multipart: `file` (part `Content-Type` exactly `text/html`, no charset, or the API answers 415), `target_lang` (regional code, e.g. `de-CH`), optional `source_lang` (bare language, e.g. `de`; see *Language codes*), optional `politeness` (`more`/`less`) → `{file_id}`
 2. `GET …/{file_id}/status` until `done` (`error`, `limit_exceeded`, `deleted` are terminal)
 3. `GET …/{file_id}/translation` → translated HTML
 4. `DELETE …/{file_id}` (files also expire after 24 h)
@@ -48,6 +49,16 @@ Shared with the WordPress plugin and every other Supertext CMS plugin:
 Auth header: `Authorization: Supertext-Auth-Key <key>`. The key may be configured with or without the `Supertext-Auth-Key ` prefix; the client strips it and always sends exactly one. The header name must be `Authorization` (the live API answers 403 to `Authentication`).
 
 **Rate limit:** the API limits requests per second per key (HTTP 429, `RATE_LIMIT_EXCEEDED`); translating into several languages at once hits it. The client retries a 429 up to 4 times, waiting for `Retry-After` if sent, otherwise 1, 2, 4 and 8 seconds (plus jitter), before reporting *Too many requests*. Base URLs: `https://api.supertext.com/v1/` (live), `api.staging…`, `api.testing…`.
+
+### Language codes
+
+Learned from the live API: the **source** is the bare language (`en`, `de`), the **target** a regional code (`de-DE`, `fr-CH`, `en-US`). Supertext rejects a bare target such as `de` with `INVALID_LANGUAGE_PAIR`, and a regional source too. `Api\LanguageCodes` applies the rule; `Service\LanguageResolver` feeds it the site languages:
+
+- Source: the default language's locale (or its `supertext_code`) reduced to the language: `en_US.UTF-8` → `en`.
+- Target: the target language's `supertext_code` if set, otherwise its locale. A code with a region keeps it, normalized (`de_CH.UTF-8` / `de-ch` → `de-CH`; scripts and numeric regions stay: `zh-Hant`, `es-419`). A bare code gets a regional default: ar→ar-SA, bg→bg-BG, cs→cs-CZ, da→da-DK, de→de-DE, el→el-GR, en→en-US, es→es-ES, et→et-EE, fi→fi-FI, fr→fr-FR, hr→hr-HR, hu→hu-HU, it→it-IT, ja→ja-JP, ko→ko-KR, lt→lt-LT, lv→lv-LV, nb→nb-NO, nl→nl-NL, pl→pl-PL, pt→pt-PT, ro→ro-RO, ru→ru-RU, sk→sk-SK, sl→sl-SI, sr→sr-RS, sv→sv-SE, th→th-TH, tr→tr-TR, uk→uk-UA, vi→vi-VN, zh→zh-CN (same table as the other Supertext plugins). Unknown bare codes are sent unchanged, so Supertext's error names them.
+- Translating within one language (source `en`, target `en-GB`) is allowed.
+
+The docs stand-in (`Tests/Docs/stand-in.mjs`) rejects bare targets and regional sources like the real API.
 
 ## Local development
 
@@ -73,9 +84,10 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at a mock that implem
 ```bash
 php Tests/HtmlDocumentTest.php   # HTML packing round trip, no TYPO3 needed
 php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs)
+php Tests/LanguageCodesTest.php  # source/target language code rules, no TYPO3 needed
 ```
 
-CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs both tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs the three tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
 
 ## Demo (Railway)
 

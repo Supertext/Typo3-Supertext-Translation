@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed: target languages whose locale has no region (e.g. `de`) are now sent to Supertext as a regional code (`de-DE`, `fr-FR`, `en-US`, …), which Supertext requires; a `supertext_code` override is normalized (`de_ch` → `de-CH`). The source is always sent without region.
 - Added: French and Italian interface (and German where it was missing): the extension configuration and the messages after a translation follow the backend user's language. The authentication-failed message now also links to Supertext account signup.
 
 ## 0.1.0 — 2026-10-07

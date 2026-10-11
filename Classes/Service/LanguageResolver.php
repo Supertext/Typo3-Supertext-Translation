@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Service;
 
+use Supertext\Typo3Translation\Api\LanguageCodes;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Site\SiteFinder;
@@ -11,8 +12,11 @@ use TYPO3\CMS\Core\Site\SiteFinder;
 /**
  * Maps TYPO3 site languages to Supertext language codes.
  *
- * Defaults to the site language's locale (de_CH.UTF-8 => "de-CH"). Override per
- * language in config/sites/<site>/config.yaml:
+ * Target: the site language's locale with its region (de_CH.UTF-8 => "de-CH"); a
+ * locale without region gets a regional default ("de" => "de-DE"), because
+ * Supertext rejects bare targets. Source: the default language's bare language
+ * ("en"). Rules in Api\LanguageCodes. Override per language in
+ * config/sites/<site>/config.yaml:
  *
  *   languages:
  *     - languageId: 1
@@ -39,19 +43,20 @@ final class LanguageResolver
         $politeness = (string)($config['supertext_politeness'] ?? 'default');
 
         return [
-            'target' => $this->codeFor($target),
-            'source' => $site->getDefaultLanguage()->getLocale()->getLanguageCode(),
+            'target' => LanguageCodes::target($this->localeOf($target), $this->overrideOf($target)),
+            'source' => LanguageCodes::source($this->localeOf($site->getDefaultLanguage()), $this->overrideOf($site->getDefaultLanguage())),
             'politeness' => in_array($politeness, ['more', 'less'], true) ? $politeness : 'default',
             'title' => $target->getTitle(),
         ];
     }
 
-    private function codeFor(SiteLanguage $language): string
+    private function overrideOf(SiteLanguage $language): string
     {
-        $custom = trim((string)($language->toArray()['supertext_code'] ?? ''));
-        if ($custom !== '') {
-            return $custom;
-        }
+        return trim((string)($language->toArray()['supertext_code'] ?? ''));
+    }
+
+    private function localeOf(SiteLanguage $language): string
+    {
         $name = $language->getLocale()->getName();
         return $name !== '' ? $name : $language->getLocale()->getLanguageCode();
     }
