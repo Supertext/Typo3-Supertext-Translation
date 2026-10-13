@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Api;
 
-use Supertext\Sdk\Client;
+use Supertext\Typo3Translation\Sdk\Client;
 use Supertext\Typo3Translation\Configuration\ExtensionSettings;
 use TYPO3\CMS\Core\Http\RequestFactory;
 
 /**
- * Creates the official Supertext SDK client (supertext/supertext-sdk) from the
+ * Creates the Supertext SDK client (bundled in lib/supertext-sdk, namespace
+ * Supertext\Typo3Translation\Sdk; see scripts/vendor-sdk.sh) from the
  * extension configuration. The SDK handles the protocol: authentication header,
  * multipart upload, 429 retries, polling, download, delete, HTML packing and
  * language codes.

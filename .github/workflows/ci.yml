@@ -25,7 +25,7 @@ jobs:
           coverage: none
       - name: Lint
         run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
-      - name: Install (TYPO3 core and the Supertext SDK)
+      - name: Install TYPO3 core
         run: composer install --no-dev --no-interaction --no-progress
       - name: Supertext SDK glue test
         run: php Tests/SdkTest.php

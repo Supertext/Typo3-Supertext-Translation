@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Localization;
 
-use Supertext\Sdk\SupertextException;
+use Supertext\Typo3Translation\Sdk\SupertextException;
 use TYPO3\CMS\Core\Authentication\AbstractUserAuthentication;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;

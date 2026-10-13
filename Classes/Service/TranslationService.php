@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Supertext\Typo3Translation\Service;
 
 use Psr\Log\LoggerInterface;
-use Supertext\Sdk\Segment;
+use Supertext\Typo3Translation\Sdk\Segment;
 use Supertext\Typo3Translation\Api\SupertextClientFactory;
 use Supertext\Typo3Translation\Configuration\ExtensionSettings;
 use Supertext\Typo3Translation\Localization\Labels;

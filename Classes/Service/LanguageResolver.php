@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Service;
 
-use Supertext\Sdk\LanguageCodes;
+use Supertext\Typo3Translation\Sdk\LanguageCodes;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Site\SiteFinder;

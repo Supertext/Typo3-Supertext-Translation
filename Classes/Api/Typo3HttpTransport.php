@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Api;
 
-use Supertext\Sdk\Http\HttpRequest;
-use Supertext\Sdk\Http\HttpResponse;
-use Supertext\Sdk\Http\HttpTransport;
-use Supertext\Sdk\Http\TransportException;
+use Supertext\Typo3Translation\Sdk\Http\HttpRequest;
+use Supertext\Typo3Translation\Sdk\Http\HttpResponse;
+use Supertext\Typo3Translation\Sdk\Http\HttpTransport;
+use Supertext\Typo3Translation\Sdk\Http\TransportException;
 use TYPO3\CMS\Core\Http\RequestFactory;
 
 /**

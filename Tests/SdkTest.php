@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use Supertext\Sdk\Client;
-use Supertext\Sdk\Http\HttpRequest;
-use Supertext\Sdk\Http\HttpResponse;
-use Supertext\Sdk\Http\HttpTransport;
-use Supertext\Sdk\LanguageCodes;
-use Supertext\Sdk\Segment;
-use Supertext\Sdk\SupertextException;
+use Supertext\Typo3Translation\Sdk\Client;
+use Supertext\Typo3Translation\Sdk\Http\HttpRequest;
+use Supertext\Typo3Translation\Sdk\Http\HttpResponse;
+use Supertext\Typo3Translation\Sdk\Http\HttpTransport;
+use Supertext\Typo3Translation\Sdk\LanguageCodes;
+use Supertext\Typo3Translation\Sdk\Segment;
+use Supertext\Typo3Translation\Sdk\SupertextException;
 use Supertext\Typo3Translation\Localization\Labels;
 
 $failures = [];

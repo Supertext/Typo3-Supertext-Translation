@@ -13,7 +13,6 @@
     "require": {
         "ext-dom": "*",
         "php": "^8.2",
-        "supertext/supertext-sdk": "^0.1 || dev-main",
         "typo3/cms-backend": "^13.4 || ^14.3",
         "typo3/cms-core": "^13.4 || ^14.3"
     },
@@ -22,6 +21,7 @@
     },
     "autoload": {
         "psr-4": {
+            "Supertext\\Typo3Translation\\Sdk\\": "lib/supertext-sdk/src/",
             "Supertext\\Typo3Translation\\": "Classes/"
         }
     },
@@ -34,13 +34,6 @@
         "allow-plugins": {
             "typo3/class-alias-loader": true,
             "typo3/cms-composer-installers": true
-        }
-    },
-    "repositories": {
-        "supertext-sdk": {
-            "type": "vcs",
-            "url": "https://github.com/Supertext/Supertext-API-SDK-and-Guide",
-            "no-api": true
         }
     }
 }

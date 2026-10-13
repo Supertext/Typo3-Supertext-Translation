@@ -17,7 +17,7 @@ Hooks\DataHandlerHook ──► Service\TranslationService
                               │  FieldCollector    which fields to translate (TCA)
                               │  LanguageResolver  site language → Supertext code/politeness
                               ▼
-                          Supertext SDK  Client::translateTexts(): pack all fields into ONE HTML
+                          Supertext SDK (lib/supertext-sdk)  Client::translateTexts(): pack all fields into ONE HTML
                               │          document, POST file → poll → GET translation → DELETE
                               │          (HTTP through Api\Typo3HttpTransport)
                               │
@@ -31,7 +31,7 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Service\TranslationService` | Groups segments per language pair, sends each pair's fields as keyed texts to the SDK's `translateTexts()` (which splits only above ~900k characters), writes results through a second DataHandler run (guarded by `TranslationService::$running` to avoid recursion), regenerates page slugs, keeps skipped code fields verbatim. |
 | `Service\FieldCollector` | TCA-driven field selection: `input`/`text`, not `l10n_mode=exclude`, not read-only, no numeric/date/email evals, no code editors, no technical reference fields (`sys_file_reference.tablenames`/`fieldname`/`table_local`, link `target`); detects rich text. |
 | `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code` or the locale, see *Language codes*), source (default language's bare language), politeness. |
-| `Api\SupertextClientFactory` | Creates the SDK's `Supertext\Sdk\Client` from the extension configuration (key, endpoint, poll interval and timeout, User-Agent `TYPO3-Supertext-Translation/<version>`). |
+| `Api\SupertextClientFactory` | Creates the SDK's `Supertext\Typo3Translation\Sdk\Client` from the extension configuration (key, endpoint, poll interval and timeout, User-Agent `TYPO3-Supertext-Translation/<version>`). |
 | `Api\Typo3HttpTransport` | The SDK's `HttpTransport` over TYPO3's `RequestFactory`, so `$GLOBALS['TYPO3_CONF_VARS']['HTTP']` (proxy, TLS, timeouts) applies and ext-curl isn't required. |
 | `Command\LocalizeCommand` | `supertext:localize <page> <language> [--recursive]`. |
 | `Localization\Labels` | Messages in the backend user's language from `Resources/Private/Language/locallang.xlf`; translates the SDK's `SupertextException`s by their `errorCode` (`Labels::ERROR_LABELS`). |
@@ -39,9 +39,12 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 
 ## Supertext API protocol
 
-The extension talks to Supertext through the official **Supertext SDK for PHP** ([`supertext/supertext-sdk`](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php), MIT, no dependencies). The SDK implements the protocol below, the HTML packing (one `data-st-id` element per field), the language code rules and the 429 retries; it is tested against the shared test vectors of all Supertext SDKs. The extension only collects fields, maps languages and writes the results back.
+The extension talks to Supertext through the official **Supertext SDK for PHP** ([Supertext-API-SDK-and-Guide](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php), MIT). The SDK implements the protocol below, the HTML packing (one `data-st-id` element per field), the language code rules and the 429 retries; it is tested against the shared test vectors of all Supertext SDKs. The extension only collects fields, maps languages and writes the results back.
 
-The SDK is not on Packagist yet: `composer.json` requires `supertext/supertext-sdk: ^0.1 || dev-main` and lists the SDK repository as a VCS repository (`no-api: true`, so Composer clones it with git instead of using the GitHub API). Projects add the same repository (see the installation guide). Once the SDK is on Packagist, drop the repository entries and the `dev-main` alternative.
+**Bundled copy:** the extension ships the SDK in `lib/supertext-sdk/` (sources, `LICENSE`, `COMMIT` with the SDK commit, a short README), with the namespace changed from `Supertext\Sdk` to `Supertext\Typo3Translation\Sdk` and autoloaded by the extension's `composer.json`. Sites install only the extension; another package that requires `supertext/supertext-sdk` itself can't clash with it. This stays so after the SDK is on Packagist.
+
+- Update it with `scripts/vendor-sdk.sh [commit-or-branch]` (default `main`; `SDK_DIR=<clone>` uses a local clone), run the tests, and commit with a CHANGELOG entry.
+- Never edit the copy: fix the SDK in its own repository, then re-run the script. PHPStan analyses `Classes/` only.
 
 The protocol, shared with the WordPress plugin and every other Supertext CMS plugin:
 
@@ -86,7 +89,7 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at `Tests/Docs/stand-
 ## Tests
 
 ```bash
-composer install --no-dev        # TYPO3 core and the Supertext SDK
+composer install --no-dev        # TYPO3 core (the SDK is bundled in lib/supertext-sdk)
 php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → SDK codes; translateTexts round trip with a fake transport
 php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs)
 ```

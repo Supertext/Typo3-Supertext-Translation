@@ -20,21 +20,22 @@ A ready-to-run container with TYPO3 14.3, demo content in English, German and Fr
 
 The extension is not on Packagist yet. Install it from GitHub or from a local folder.
 
-**From GitHub** — add the repository and the [Supertext SDK](https://github.com/Supertext/Supertext-API-SDK-and-Guide) (which the extension uses to talk to Supertext, also not on Packagist yet) to your project's `composer.json`, then require both:
+**From GitHub** — add the repository to your project's `composer.json`, then require it:
 
 ```bash
 composer config repositories.supertext-typo3 vcs https://github.com/Supertext/Typo3-Supertext-Translation
-composer config repositories.supertext-sdk '{"type": "vcs", "url": "https://github.com/Supertext/Supertext-API-SDK-and-Guide", "no-api": true}'
-composer require supertext/supertext-sdk:dev-main supertext/typo3-translation:dev-main
+composer require supertext/typo3-translation:dev-main
 ```
+
+The extension brings the [Supertext SDK](https://github.com/Supertext/Supertext-API-SDK-and-Guide) it uses to talk to Supertext with it; there is nothing else to install.
 
 The repository is private for now, so Composer needs a GitHub token with read access (`composer config --global github-oauth.github.com <token>`).
 
 **From a local folder** — the TYPO3 base distribution already reads packages from `packages/*`:
 
 ```bash
-# copy or clone the repo to packages/supertext_translation, add the SDK repository as above, then
-composer require supertext/supertext-sdk:dev-main supertext/typo3-translation:@dev
+# copy or clone the repo to packages/supertext_translation, then
+composer require supertext/typo3-translation:@dev
 ```
 
 ## 2. Activate it
@@ -107,7 +108,7 @@ vendor/bin/typo3 supertext:localize <page-uid> <language-id>
 ## Updating
 
 ```bash
-composer update supertext/typo3-translation supertext/supertext-sdk
+composer update supertext/typo3-translation
 vendor/bin/typo3 extension:setup -e supertext_translation
 vendor/bin/typo3 cache:flush
 ```
@@ -115,7 +116,7 @@ vendor/bin/typo3 cache:flush
 ## Uninstalling
 
 ```bash
-composer remove supertext/typo3-translation supertext/supertext-sdk
+composer remove supertext/typo3-translation
 vendor/bin/typo3 cache:flush
 ```
 

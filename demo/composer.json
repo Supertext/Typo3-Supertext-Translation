@@ -13,7 +13,6 @@
         "sort-packages": true
     },
     "require": {
-        "supertext/supertext-sdk": "dev-main",
         "supertext/typo3-translation": "@dev",
         "typo3/cms-backend": "^14.3",
         "typo3/cms-belog": "^14.3",
@@ -45,11 +44,6 @@
         "packages": {
             "type": "path",
             "url": "./packages/*"
-        },
-        "supertext-sdk": {
-            "type": "vcs",
-            "url": "https://github.com/Supertext/Supertext-API-SDK-and-Guide",
-            "no-api": true
         }
     }
 }

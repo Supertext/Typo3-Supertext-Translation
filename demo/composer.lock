@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a4cf608750c23cba6d35512d4b2b1a3a",
+    "content-hash": "9aae7d1bede939c101ca68c4bb758c95",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2146,88 +2146,16 @@
             "time": "2024-09-11T13:17:53+00:00"
         },
         {
-            "name": "supertext/supertext-sdk",
-            "version": "dev-main",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Supertext/Supertext-API-SDK-and-Guide",
-                "reference": "6468cf62630cf37a966ccadec94f65df39fb8a37"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Supertext/Supertext-API-SDK-and-Guide/zipball/6468cf62630cf37a966ccadec94f65df39fb8a37",
-                "reference": "6468cf62630cf37a966ccadec94f65df39fb8a37",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "php": ">=8.1"
-            },
-            "require-dev": {
-                "phpstan/phpstan": "^2.1",
-                "phpunit/phpunit": "^10.5 || ^11.0"
-            },
-            "suggest": {
-                "ext-curl": "Needed only for the built-in CurlTransport. Not needed when you pass your own HttpTransport (e.g. wrapping Symfony HttpClient or Guzzle)."
-            },
-            "default-branch": true,
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Supertext\\Sdk\\": "sdk/php/src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Supertext\\Sdk\\Tests\\": "sdk/php/tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "phpunit -c sdk/php/phpunit.xml.dist"
-                ],
-                "phpstan": [
-                    "phpstan analyse -c sdk/php/phpstan.neon"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Supertext AG",
-                    "homepage": "https://www.supertext.com"
-                }
-            ],
-            "description": "Client for the Supertext AI translation API: translate HTML and texts, with language codes, rate-limit retries and HTML packing handled for you.",
-            "homepage": "https://github.com/Supertext/Supertext-API-SDK-and-Guide",
-            "keywords": [
-                "ai",
-                "api",
-                "localization",
-                "sdk",
-                "supertext",
-                "translation"
-            ],
-            "support": {
-                "issues": "https://github.com/Supertext/Supertext-API-SDK-and-Guide/issues",
-                "source": "https://github.com/Supertext/Supertext-API-SDK-and-Guide",
-                "security": "https://github.com/Supertext/Supertext-API-SDK-and-Guide/security/policy"
-            },
-            "time": "2026-10-11T14:45:30+00:00"
-        },
-        {
             "name": "supertext/typo3-translation",
             "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "./packages/supertext_translation",
-                "reference": "8ea18035a41ac80e6ff83761f12b91ba2182fede"
+                "reference": "460c2cba8d978cfbea4d18462ea99d61dc161949"
             },
             "require": {
                 "ext-dom": "*",
                 "php": "^8.2",
-                "supertext/supertext-sdk": "^0.1 || dev-main",
                 "typo3/cms-backend": "^13.4 || ^14.3",
                 "typo3/cms-core": "^13.4 || ^14.3"
             },
@@ -2242,6 +2170,7 @@
             },
             "autoload": {
                 "psr-4": {
+                    "Supertext\\Typo3Translation\\Sdk\\": "lib/supertext-sdk/src/",
                     "Supertext\\Typo3Translation\\": "Classes/"
                 }
             },
@@ -7957,7 +7886,6 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "supertext/supertext-sdk": 20,
         "supertext/typo3-translation": 20
     },
     "prefer-stable": false,
