@@ -6,8 +6,21 @@ services:
 
   Supertext\Typo3Translation\:
     resource: '../Classes/*'
+    exclude:
+      - '../Classes/Reporting/Installation.php'
+      - '../Classes/Reporting/Reporting.php'
 
   Supertext\Typo3Translation\Hooks\DataHandlerHook:
+    public: true
+
+  # Created with makeInstance() by the extension configuration's status field and the frontend middleware.
+  Supertext\Typo3Translation\Reporting\Typo3Reporting:
+    public: true
+
+  Supertext\Typo3Translation\Configuration\ExtensionSettings:
+    public: true
+
+  Supertext\Typo3Translation\Middleware\PingMiddleware:
     public: true
 
   Supertext\Typo3Translation\Command\LocalizeCommand:

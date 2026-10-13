@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Localization;
 
-use Supertext\Typo3Translation\Sdk\SupertextException;
+use Supertext\Typo3Translation\Sdk\V1\SupertextException;
 use TYPO3\CMS\Core\Authentication\AbstractUserAuthentication;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
@@ -39,6 +39,8 @@ final class Labels
         SupertextException::MISSING_API_KEY => 'error.noApiKey',
         SupertextException::AUTHENTICATION_FAILURE => 'error.authentication',
         SupertextException::INVALID_LANGUAGE_PAIR => 'error.languagePair',
+        SupertextException::UNSUPPORTED_LANGUAGE => 'error.unsupportedLanguage',
+        SupertextException::UNSUPPORTED_FEATURE => 'error.unsupportedFeature',
         SupertextException::NOT_FOUND => 'error.notFound',
         SupertextException::PAYLOAD_TOO_LARGE => 'error.tooLarge',
         SupertextException::TOO_MANY_REQUESTS => 'error.rateLimit',
@@ -63,9 +65,10 @@ final class Labels
         $message = match ($e->errorCode) {
             SupertextException::UNEXPECTED_STATUS => $this->get('error.http', (int)$e->status),
             SupertextException::TRANSPORT_ERROR => $this->get('error.unreachable', $detail),
+            SupertextException::UNSUPPORTED_LANGUAGE => $this->get('error.unsupportedLanguage', (string)($e->targetLang ?? $e->sourceLang ?? '')),
             default => $this->get(self::ERROR_LABELS[$e->errorCode]),
         };
-        if ($e->errorCode === SupertextException::TRANSPORT_ERROR) {
+        if (in_array($e->errorCode, [SupertextException::TRANSPORT_ERROR, SupertextException::UNSUPPORTED_LANGUAGE], true)) {
             return $message;
         }
         return $detail !== '' ? $message . ' (' . $detail . ')' : $message;

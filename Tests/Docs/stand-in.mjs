@@ -3,6 +3,9 @@
  * Docs screenshots only: answers like the Supertext AI file translation API and
  * returns real German for the demo's FAQ page (sample-de.json). Other text comes
  * back unchanged. Listens on :8765 (any API key).
+ *
+ * Also stands in for the Supertext Commando Center: POST /api/v1/report answers 202, so
+ * screenshots never report to the live center (SUPERTEXT_REPORT_URL=http://127.0.0.1:8765/api/v1/report).
  */
 import http from 'node:http';
 import { randomBytes } from 'node:crypto';
@@ -19,13 +22,17 @@ http
       res.writeHead(status, { 'Content-Type': type });
       res.end(type === 'application/json' ? JSON.stringify(body) : body);
     };
-    if (path === '/features') return send(200, {});
+    if (path === '/features') return send(200, []);
+    if (req.method === 'POST' && /\/report$/.test(path)) {
+      for await (const chunk of req) void chunk;
+      return send(202, { ok: true });
+    }
     if (req.method === 'POST') {
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
       const form = await new Request('http://x', { method: 'POST', headers: req.headers, body: Buffer.concat(chunks) }).formData();
-      // Like the real API: the target needs a region ("de-DE"), the source must be bare ("en").
-      if (!/^[a-z]{2,3}-[A-Za-z0-9]{2,4}$/.test(form.get('target_lang') ?? '') || /[-_]/.test(form.get('source_lang') ?? '')) {
+      // Like the real API: the source must be bare ("en"); the target is a Supertext code ("de-CH", "es").
+      if (!/^[a-z]{2,3}(-[A-Za-z0-9-]+)?$/.test(form.get('target_lang') ?? '') || /[-_]/.test(form.get('source_lang') ?? '')) {
         return send(400, { error: { code: 'INVALID_LANGUAGE_PAIR', message: `Invalid language pair ${form.get('source_lang')} -> ${form.get('target_lang')}` } });
       }
       const id = randomBytes(6).toString('hex');

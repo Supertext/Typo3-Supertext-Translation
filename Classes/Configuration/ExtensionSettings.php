@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Configuration;
 
+use Supertext\Typo3Translation\Sdk\V1\InstallationReporter;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 
 /**
@@ -76,5 +77,38 @@ final class ExtensionSettings
     public function shouldRegenerateSlugs(): bool
     {
         return (bool)($this->config['regenerateSlugs'] ?? true);
+    }
+
+    /** The "Send version information to Supertext" setting; null when it was never saved (= on). */
+    public function getVersionReportsSetting(): ?bool
+    {
+        if (!array_key_exists('versionReports', $this->config) || $this->config['versionReports'] === '') {
+            return null;
+        }
+        return (bool)$this->config['versionReports'];
+    }
+
+    /** Whether version reports are on: SUPERTEXT_VERSION_REPORTS (0/1, off/on, ...) wins over the setting. */
+    public function areVersionReportsEnabled(): bool
+    {
+        return InstallationReporter::reportsEnabled($this->getVersionReportsSetting());
+    }
+
+    /** True when SUPERTEXT_VERSION_REPORTS decides, whatever the setting says. */
+    public function isVersionReportsSetByEnvironment(): bool
+    {
+        return InstallationReporter::reportsEnabled(true) === InstallationReporter::reportsEnabled(false);
+    }
+
+    /**
+     * A hash of the saved extension configuration, to notice that an administrator saved
+     * it (TYPO3 has no event for that). Kept locally, never sent anywhere.
+     */
+    public function getConfigurationFingerprint(): string
+    {
+        $config = $this->config;
+        unset($config['status']);
+        ksort($config);
+        return hash('sha256', (string)json_encode($config));
     }
 }

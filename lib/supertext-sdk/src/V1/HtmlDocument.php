@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Supertext\Typo3Translation\Sdk;
+namespace Supertext\Typo3Translation\Sdk\V1;
 
 /**
  * Packs segments into the HTML document sent to Supertext and reads them back from the translation.

@@ -15,6 +15,8 @@ Translated records stay **hidden** (TYPO3's default for new translations) so edi
 
 Which fields are translated is derived from TCA: `input` and `text` fields that aren't excluded from localization, read-only, numeric, code editors or similar. Rich-text fields keep their markup. `bodytext` of HTML content elements is never translated (configurable).
 
+Each site language is sent with its Supertext language: the locale when it is a Supertext code (`de-CH`, `es`), otherwise the one the administrator chose in the site configuration — no guessed regions. The extension checks the API key automatically and, unless switched off, sends version information (no content, no key) to Supertext; see the [installation guide](docs/INSTALLATION.md#version-information-and-the-api-key-check).
+
 ## Documentation
 
 | Guide | For |

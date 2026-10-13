@@ -84,8 +84,8 @@
 				<target>Échec de l'authentification. Veuillez vérifier la clé API Supertext. Pas encore de compte Supertext ? Créez-en un sur https://www.supertext.com/person/en/account/signin . Générez votre clé API sur https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, rôle Admin requis).</target>
 			</trans-unit>
 			<trans-unit id="error.languagePair" approved="yes">
-				<source>Supertext does not support this language pair. Check the locale of the site languages or their supertext_code.</source>
-				<target>Supertext ne prend pas en charge cette paire de langues. Vérifiez la locale des langues du site ou leur supertext_code.</target>
+				<source>Supertext does not support this language pair. Check the Supertext language of the site languages (field Supertext language in the site configuration, or supertext_code).</source>
+				<target>Supertext ne prend pas en charge cette paire de langues. Vérifiez la langue Supertext des langues du site (champ Langue Supertext dans la configuration du site, ou supertext_code).</target>
 			</trans-unit>
 			<trans-unit id="error.notFound" approved="yes">
 				<source>The requested Supertext resource was not found.</source>
@@ -106,6 +106,162 @@
 			<trans-unit id="error.http" approved="yes">
 				<source>Supertext answered with HTTP %d.</source>
 				<target>Supertext a répondu avec le code HTTP %d.</target>
+			</trans-unit>
+			<trans-unit id="settings.status" approved="yes">
+				<source>Status: The latest Supertext API key check, the version information setting and how the site languages map to Supertext languages.</source>
+				<target>Statut : la dernière vérification de la clé API Supertext, le paramètre des informations de version et l'association des langues du site aux langues Supertext.</target>
+			</trans-unit>
+			<trans-unit id="settings.versionReports" approved="yes">
+				<source>Send version information to Supertext: Sends the site URL and the versions of this extension, TYPO3 and the runtime to Supertext when you save these settings and after an update, so Supertext support can see which version you run. No content, no API key and no personal data are sent. The environment variable SUPERTEXT_VERSION_REPORTS=0 turns it off and takes precedence.</source>
+				<target>Envoyer les informations de version à Supertext : envoie à Supertext l'URL du site ainsi que les versions de cette extension, de TYPO3 et de l'environnement d'exécution lorsque vous enregistrez ces paramètres et après une mise à jour. Le support Supertext voit ainsi quelle version vous utilisez. Aucun contenu, aucune clé API et aucune donnée personnelle ne sont transmis. La variable d'environnement SUPERTEXT_VERSION_REPORTS=0 le désactive et est prioritaire.</target>
+			</trans-unit>
+			<trans-unit id="error.unsupportedLanguage" approved="yes">
+				<source>The language %s has no Supertext language yet. Ask your administrator to map it (field Supertext language of the site language in the site configuration, or supertext_code, e.g. de-CH).</source>
+				<target>La langue %s n’est encore associée à aucune langue Supertext. Demandez à votre administrateur de l’associer (champ Langue Supertext de la langue du site dans la configuration du site, ou supertext_code, p. ex. de-CH).</target>
+			</trans-unit>
+			<trans-unit id="error.unsupportedFeature" approved="yes">
+				<source>Supertext offers no formal or informal tone for this language. Set the Supertext tone of this site language to Default (supertext_politeness).</source>
+				<target>Supertext ne propose pas de ton formel ou informel pour cette langue. Réglez le ton Supertext de cette langue du site sur Par défaut (supertext_politeness).</target>
+			</trans-unit>
+			<trans-unit id="status.unavailable" approved="yes">
+				<source>The Supertext status is not available here. Open the extension configuration in the TYPO3 backend (Settings module).</source>
+				<target>Le statut Supertext n'est pas disponible ici. Ouvrez la configuration de l'extension dans le backend TYPO3 (module Paramètres).</target>
+			</trans-unit>
+			<trans-unit id="status.keyCheck" approved="yes">
+				<source>API key check</source>
+				<target>Vérification de la clé API</target>
+			</trans-unit>
+			<trans-unit id="status.notChecked" approved="yes">
+				<source>Not checked yet. The key is checked when you save this configuration and when a translation runs.</source>
+				<target>Pas encore vérifiée. La clé est vérifiée lorsque vous enregistrez cette configuration et lors d'une traduction.</target>
+			</trans-unit>
+			<trans-unit id="status.checkedAt" approved="yes">
+				<source>checked %s</source>
+				<target>vérifiée le %s</target>
+			</trans-unit>
+			<trans-unit id="keycheck.ok" approved="yes">
+				<source>API key checked: the connection to Supertext works.</source>
+				<target>Clé API vérifiée : la connexion à Supertext fonctionne.</target>
+			</trans-unit>
+			<trans-unit id="keycheck.invalid" approved="yes">
+				<source>Supertext rejected the API key. Check that you copied the whole key, or generate a new one at supertext.com → Integrations → API (requires the Admin role). No Supertext account yet? Create one at supertext.com.</source>
+				<target>Supertext a refusé la clé API. Vérifiez que vous avez copié la clé entière ou générez-en une nouvelle sur supertext.com → Integrations → API (rôle Admin requis). Pas encore de compte Supertext ? Créez-en un sur supertext.com.</target>
+			</trans-unit>
+			<trans-unit id="keycheck.missing" approved="yes">
+				<source>No API key is set yet. No Supertext account yet? Create one at supertext.com. Generate your API key at supertext.com → Integrations → API (requires the Admin role).</source>
+				<target>Aucune clé API n'est encore saisie. Pas encore de compte Supertext ? Créez-en un sur supertext.com. Générez votre clé API sur supertext.com → Integrations → API (rôle Admin requis).</target>
+			</trans-unit>
+			<trans-unit id="keycheck.unreachable" approved="yes">
+				<source>The API key couldn't be checked because Supertext can't be reached. The settings are saved; check again later.</source>
+				<target>La clé API n'a pas pu être vérifiée, car Supertext n'est pas joignable. Les paramètres sont enregistrés ; réessayez plus tard.</target>
+			</trans-unit>
+			<trans-unit id="keycheck.error" approved="yes">
+				<source>The API key couldn't be checked: Supertext answered with an error (%s). The settings are saved; check again later.</source>
+				<target>La clé API n'a pas pu être vérifiée : Supertext a répondu par une erreur (%s). Les paramètres sont enregistrés ; réessayez plus tard.</target>
+			</trans-unit>
+			<trans-unit id="status.reports" approved="yes">
+				<source>Send version information to Supertext</source>
+				<target>Envoyer les informations de version à Supertext</target>
+			</trans-unit>
+			<trans-unit id="status.reportsOn" approved="yes">
+				<source>On</source>
+				<target>Activé</target>
+			</trans-unit>
+			<trans-unit id="status.reportsOff" approved="yes">
+				<source>Off</source>
+				<target>Désactivé</target>
+			</trans-unit>
+			<trans-unit id="status.reportsOffEnvironment" approved="yes">
+				<source>Off (environment variable SUPERTEXT_VERSION_REPORTS)</source>
+				<target>Désactivé (variable d'environnement SUPERTEXT_VERSION_REPORTS)</target>
+			</trans-unit>
+			<trans-unit id="status.pingUrl" approved="yes">
+				<source>Ping address for Supertext: %s</source>
+				<target>Adresse de ping pour Supertext : %s</target>
+			</trans-unit>
+			<trans-unit id="status.noSiteUrl" approved="yes">
+				<source>No site URL known yet, so nothing is sent. Give a site an absolute base URL in its site configuration.</source>
+				<target>Aucune URL de site n'est encore connue, rien n'est donc envoyé. Donnez une URL de base absolue à un site dans sa configuration.</target>
+			</trans-unit>
+			<trans-unit id="status.languages" approved="yes">
+				<source>Languages</source>
+				<target>Langues</target>
+			</trans-unit>
+			<trans-unit id="status.languagesHelp" approved="yes">
+				<source>Every site language needs a Supertext language. Choose it in the site configuration (Languages, field Supertext language) or set supertext_code in config/sites/&lt;site&gt;/config.yaml.</source>
+				<target>Chaque langue du site a besoin d'une langue Supertext. Choisissez-la dans la configuration du site (Langues, champ Langue Supertext) ou définissez supertext_code dans config/sites/&lt;site&gt;/config.yaml.</target>
+			</trans-unit>
+			<trans-unit id="status.noSites" approved="yes">
+				<source>No sites are configured yet.</source>
+				<target>Aucun site n'est encore configuré.</target>
+			</trans-unit>
+			<trans-unit id="status.site" approved="yes">
+				<source>Site %s</source>
+				<target>Site %s</target>
+			</trans-unit>
+			<trans-unit id="status.language" approved="yes">
+				<source>Site language</source>
+				<target>Langue du site</target>
+			</trans-unit>
+			<trans-unit id="status.locale" approved="yes">
+				<source>Locale</source>
+				<target>Locale</target>
+			</trans-unit>
+			<trans-unit id="status.supertext" approved="yes">
+				<source>Supertext language</source>
+				<target>Langue Supertext</target>
+			</trans-unit>
+			<trans-unit id="status.tone" approved="yes">
+				<source>Tone</source>
+				<target>Ton</target>
+			</trans-unit>
+			<trans-unit id="status.source" approved="yes">
+				<source>source</source>
+				<target>langue source</target>
+			</trans-unit>
+			<trans-unit id="status.notMapped" approved="yes">
+				<source>Not mapped: choose its Supertext language</source>
+				<target>Non associée : choisissez sa langue Supertext</target>
+			</trans-unit>
+			<trans-unit id="status.tone.default" approved="yes">
+				<source>Default</source>
+				<target>Par défaut</target>
+			</trans-unit>
+			<trans-unit id="status.tone.more" approved="yes">
+				<source>Formal</source>
+				<target>Formel (vous)</target>
+			</trans-unit>
+			<trans-unit id="status.tone.less" approved="yes">
+				<source>Informal</source>
+				<target>Informel (tu)</target>
+			</trans-unit>
+			<trans-unit id="status.noPoliteness" approved="yes">
+				<source>Supertext offers no formal/informal choice for this language: set the tone to Default</source>
+				<target>Supertext ne propose pas de choix formel/informel pour cette langue : réglez le ton sur Par défaut</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.palette" approved="yes">
+				<source>Supertext</source>
+				<target>Supertext</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.code" approved="yes">
+				<source>Supertext language</source>
+				<target>Langue Supertext</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.code.description" approved="yes">
+				<source>The language Supertext translates into (for the default language: from). Automatic uses the locale when it is a Supertext language (e.g. de-CH, es); otherwise translations into this language stop with a message until you choose one.</source>
+				<target>La langue dans laquelle Supertext traduit (pour la langue par défaut : à partir de laquelle). Automatique utilise la locale si c'est une langue Supertext (p. ex. de-CH, es) ; sinon, les traductions vers cette langue s'arrêtent avec un message jusqu'à ce que vous en choisissiez une.</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.code.automatic" approved="yes">
+				<source>Automatic (the locale, if it is a Supertext language)</source>
+				<target>Automatique (la locale, si c'est une langue Supertext)</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.politeness" approved="yes">
+				<source>Supertext tone</source>
+				<target>Ton Supertext</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.politeness.description" approved="yes">
+				<source>Formal (Sie, vous, Lei) or informal (du, tu) address, for languages where Supertext offers it.</source>
+				<target>Vouvoiement (vous) ou tutoiement (tu), pour les langues où Supertext le propose.</target>
 			</trans-unit>
 		</body>
 	</file>

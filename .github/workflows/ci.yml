@@ -29,6 +29,8 @@ jobs:
         run: composer install --no-dev --no-interaction --no-progress
       - name: Supertext SDK glue test
         run: php Tests/SdkTest.php
+      - name: Version reports, key check and ping test
+        run: php Tests/ReportingTest.php
       - name: Interface translations test
         run: php Tests/LanguageFilesTest.php
       - name: Demo entrypoint syntax

@@ -1,3 +1,5 @@
+# cat=basic/enable/005; type=user[Supertext\Typo3Translation\Configuration\StatusField->render]; label=LLL:EXT:supertext_translation/Resources/Private/Language/locallang.xlf:settings.status
+status =
 # cat=basic/enable/010; type=boolean; label=LLL:EXT:supertext_translation/Resources/Private/Language/locallang.xlf:settings.enabled
 enabled = 1
 # cat=basic/api/020; type=string; label=LLL:EXT:supertext_translation/Resources/Private/Language/locallang.xlf:settings.apiKey
@@ -6,6 +8,8 @@ apiKey =
 environment = live
 # cat=basic/api/040; type=string; label=LLL:EXT:supertext_translation/Resources/Private/Language/locallang.xlf:settings.endpoint
 endpoint =
+# cat=basic/api/050; type=boolean; label=LLL:EXT:supertext_translation/Resources/Private/Language/locallang.xlf:settings.versionReports
+versionReports = 1
 # cat=advanced/poll/010; type=int+; label=LLL:EXT:supertext_translation/Resources/Private/Language/locallang.xlf:settings.pollTimeout
 pollTimeout = 180
 # cat=advanced/poll/020; type=int+; label=LLL:EXT:supertext_translation/Resources/Private/Language/locallang.xlf:settings.pollInterval

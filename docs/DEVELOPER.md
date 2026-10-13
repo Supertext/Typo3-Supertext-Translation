@@ -30,25 +30,30 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Hooks\DataHandlerHook` | Collects every record localized in a DataHandler run (from `copyMappingArray`, so inline children like `sys_file_reference` are included), triggers translation in `afterFinish`, shows flash messages. |
 | `Service\TranslationService` | Groups segments per language pair, sends each pair's fields as keyed texts to the SDK's `translateTexts()` (which splits only above ~900k characters), writes results through a second DataHandler run (guarded by `TranslationService::$running` to avoid recursion), regenerates page slugs, keeps skipped code fields verbatim. |
 | `Service\FieldCollector` | TCA-driven field selection: `input`/`text`, not `l10n_mode=exclude`, not read-only, no numeric/date/email evals, no code editors, no technical reference fields (`sys_file_reference.tablenames`/`fieldname`/`table_local`, link `target`); detects rich text. |
-| `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code` or the locale, see *Language codes*), source (default language's bare language), politeness. |
-| `Api\SupertextClientFactory` | Creates the SDK's `Supertext\Typo3Translation\Sdk\Client` from the extension configuration (key, endpoint, poll interval and timeout, User-Agent `TYPO3-Supertext-Translation/<version>`). |
+| `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code`, else an exact Supertext code; see *Language codes*), source (default language's bare language), politeness. Throws the SDK's `unsupported_language` for unmapped languages. |
+| `Api\SupertextClientFactory` | Creates the SDK's `Supertext\Typo3Translation\Sdk\V1\Client` from the extension configuration (key, endpoint, poll interval and timeout, User-Agent `TYPO3-Supertext-Translation/<version>` with the version from `ext_emconf.php`). |
+| `Reporting\Reporting` | Commando Center glue without TYPO3 classes: picks the SDK `InstallationReporter` action (`afterSettingsSaved` when the configuration fingerprint changed, else `onRequest`; `authenticationFailed` after a 401/403), loads and stores the reporter state, answers the ping. Never throws. |
+| `Reporting\Typo3Reporting` | Feeds `Reporting` with the site URL, TYPO3 version, ping URL and the registry (`Reporting\RegistryStateStorage`); `later()` runs the reporter at the end of the request (after `fastcgi_finish_request()` where available). |
+| `Middleware\PingMiddleware` | Public `GET <root>/supertext/ping` in the frontend stack, before the site resolver (no login, session or page cache). |
+| `Configuration\StatusField` | The *Status* block at the top of the extension configuration (`type=user` in `ext_conf_template.txt`): key check, version reports, language mapping per site. |
+| `Configuration/SiteConfiguration/Overrides/site_language.php` | The *Supertext* palette in the site language form: `supertext_code` (select of the SDK's `Languages::TARGETS`) and `supertext_politeness`. |
 | `Api\Typo3HttpTransport` | The SDK's `HttpTransport` over TYPO3's `RequestFactory`, so `$GLOBALS['TYPO3_CONF_VARS']['HTTP']` (proxy, TLS, timeouts) applies and ext-curl isn't required. |
 | `Command\LocalizeCommand` | `supertext:localize <page> <language> [--recursive]`. |
 | `Localization\Labels` | Messages in the backend user's language from `Resources/Private/Language/locallang.xlf`; translates the SDK's `SupertextException`s by their `errorCode` (`Labels::ERROR_LABELS`). |
-| `Configuration\ExtensionSettings` | Typed extension configuration plus `SUPERTEXT_API_KEY` / `SUPERTEXT_API_ENDPOINT` env overrides. |
+| `Configuration\ExtensionSettings` | Typed extension configuration plus `SUPERTEXT_API_KEY` / `SUPERTEXT_API_ENDPOINT` / `SUPERTEXT_VERSION_REPORTS` env overrides, and the configuration fingerprint. |
 
 ## Supertext API protocol
 
 The extension talks to Supertext through the official **Supertext SDK for PHP** ([Supertext-API-SDK-and-Guide](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php), MIT). The SDK implements the protocol below, the HTML packing (one `data-st-id` element per field), the language code rules and the 429 retries; it is tested against the shared test vectors of all Supertext SDKs. The extension only collects fields, maps languages and writes the results back.
 
-**Bundled copy:** the extension ships the SDK in `lib/supertext-sdk/` (sources, `LICENSE`, `COMMIT` with the SDK commit, a short README), with the namespace changed from `Supertext\Sdk` to `Supertext\Typo3Translation\Sdk` and autoloaded by the extension's `composer.json`. Sites install only the extension; another package that requires `supertext/supertext-sdk` itself can't clash with it. This stays so after the SDK is on Packagist.
+**Bundled copy:** the extension ships the SDK (0.2.0) in `lib/supertext-sdk/` (sources, `LICENSE`, `COMMIT` with the SDK commit, `VERSION`, a short README), with the namespace changed from `Supertext\Sdk` to `Supertext\Typo3Translation\Sdk` and autoloaded by the extension's `composer.json`. Everything that talks to the API is in the versioned namespace `…\Sdk\V1` (`src/V1/`); the HTTP transport (`…\Sdk\Http`) and `…\Sdk\Supertext::SDK_VERSION` are version-neutral. Sites install only the extension; another package that requires `supertext/supertext-sdk` itself can't clash with it. This stays so after the SDK is on Packagist.
 
 - Update it with `scripts/vendor-sdk.sh [commit-or-branch]` (default `main`; `SDK_DIR=<clone>` uses a local clone), run the tests, and commit with a CHANGELOG entry.
 - Never edit the copy: fix the SDK in its own repository, then re-run the script. PHPStan analyses `Classes/` only.
 
 The protocol, shared with the WordPress plugin and every other Supertext CMS plugin:
 
-1. `POST {base}translate/ai/file` — multipart: `file` (part `Content-Type` exactly `text/html`, no charset, or the API answers 415), `target_lang` (regional code, e.g. `de-CH`), optional `source_lang` (bare language, e.g. `de`; see *Language codes*), optional `politeness` (`more`/`less`) → `{file_id}`
+1. `POST {base}translate/ai/file` — multipart: `file` (part `Content-Type` exactly `text/html`, no charset, or the API answers 415), `target_lang` (a Supertext target code, e.g. `de-CH`, `es`), optional `source_lang` (bare language, e.g. `de`; see *Language codes*), optional `politeness` (`more`/`less`) → `{file_id}`
 2. `GET …/{file_id}/status` until `done` (`error`, `limit_exceeded`, `deleted` are terminal)
 3. `GET …/{file_id}/translation` → translated HTML
 4. `DELETE …/{file_id}` (files also expire after 24 h)
@@ -59,13 +64,33 @@ Auth header: `Authorization: Supertext-Auth-Key <key>`. The key may be configure
 
 ### Language codes
 
-Learned from the live API: the **source** is the bare language (`en`, `de`), the **target** a regional code (`de-DE`, `fr-CH`, `en-US`). Supertext rejects a bare target such as `de` with `INVALID_LANGUAGE_PAIR`, and a regional source too. The SDK's `LanguageCodes` applies the rule; `Service\LanguageResolver` feeds it the site languages (locale without encoding, e.g. `de_CH.UTF-8` → `de_CH`, or the `supertext_code`):
+Supertext accepts exactly the codes of its `GET features` (the SDK's `Languages::TARGETS` / `SOURCES`, listed in the [installation guide](INSTALLATION.md#supertext-languages)): targets are regional only for German, English, French, Italian and Portuguese (`de-CH`, `en-US`, `pt-BR`), a script for Chinese and Serbian (`zh-Hans`, `sr-Latn`), a dialect for Swiss German (`gsw-u-sd-chzh`), and **bare for all others** (`es`, `nl`, `sl`); sources are bare (`en`). Anything else is rejected (`INVALID_LANGUAGE_PAIR`, HTTP 404 for unknown pairs). **No guessing:** there are no default regions any more (the old ones, e.g. `es-ES`, `sl-SI`, `zh-CN`, are rejected by the live API).
 
-- Source: the default language's locale (or its `supertext_code`) reduced to the language: `en_US.UTF-8` → `en`.
-- Target: the target language's `supertext_code` if set, otherwise its locale. A code with a region keeps it, normalized (`de_CH.UTF-8` / `de-ch` → `de-CH`; scripts and numeric regions stay: `zh-Hant`, `es-419`; variants and extensions are dropped: `de_DE_formal` → `de-DE`). A bare code gets a regional default: ar→ar-SA, bg→bg-BG, cs→cs-CZ, da→da-DK, de→de-DE, el→el-GR, en→en-US, es→es-ES, et→et-EE, fi→fi-FI, fr→fr-FR, hr→hr-HR, hu→hu-HU, it→it-IT, ja→ja-JP, ko→ko-KR, lt→lt-LT, lv→lv-LV, nb→nb-NO, nl→nl-NL, pl→pl-PL, pt→pt-PT, ro→ro-RO, ru→ru-RU, sk→sk-SK, sl→sl-SI, sr→sr-RS, sv→sv-SE, th→th-TH, tr→tr-TR, uk→uk-UA, vi→vi-VN, zh→zh-CN (same table as the other Supertext plugins). Unknown bare codes are sent unchanged, so Supertext's error names them. A language Supertext doesn't know at all comes back as HTTP 404 with `INVALID_LANGUAGE_PAIR`; the SDK reports it as `invalid_language_pair`, so editors see the language pair message (`error.languagePair`), not *not found*.
+`Service\LanguageResolver` resolves every site language with the SDK's `Languages` (the same rules in every Supertext plugin):
+
+- Target: `Languages::target($locale, [$locale => $supertextCode])`: the site language's `supertext_code` wins and is sent as it is; else the locale without encoding (`de_CH.UTF-8` → `de_CH`) if it equals a Supertext code apart from case and `_`/`-` (`de_CH` → `de-CH`, `es` → `es`); else the SDK's `unsupported_language` with the locale as `targetLang`. Nothing is sent then; the editor sees *The language … has no Supertext language yet* (`error.unsupportedLanguage`), one message per language.
+- Source: `Languages::source($supertextCode ?: $locale)`: the default language's code reduced to a Supertext source (`en_US` → `en`, a `supertext_code` of `de-CH` → `de`).
+- Politeness: `supertext_politeness` (`more`/`less`) is sent as configured. `Languages::supportsPoliteness()` is false for e.g. `en-US`, `rm`, `sq`, `sr-*`, `gsw-*`: the Status block warns, and Supertext answers `unsupported_feature` (`error.unsupportedFeature`).
 - Translating within one language (source `en`, target `en-GB`) is allowed.
 
-The docs stand-in (`Tests/Docs/stand-in.mjs`) rejects bare targets and regional sources like the real API.
+The mapping lives in the site configuration (`config/sites/<site>/config.yaml`, per language), editable in the backend through the *Supertext* palette of the site language form (`Configuration/SiteConfiguration/Overrides/site_language.php`). The docs stand-in (`Tests/Docs/stand-in.mjs`) rejects regional sources like the real API.
+
+## Version reports, API key check and ping (Commando Center)
+
+Protocol: Commando-Center-Supertext-Translation → `docs/DEVELOPER.md` → *Report protocol*; implemented by the SDK's `InstallationReporter` (`checkApiKey()`, `reportsEnabled()`, `pingResponse()`, `ReporterState`). The extension only decides when to call it and where to keep the state.
+
+| When | Reporter call | Where |
+| --- | --- | --- |
+| The extension configuration was saved (its fingerprint differs from the stored one; TYPO3 has no "saved" event) | `afterSettingsSaved` (`installed` the first time, else `settings_saved`) | The *Status* field when the configuration is opened again (synchronously, so the result shows), or the next translation / `supertext:localize` (after the response) |
+| Back-end requests that run the extension: opening its configuration, every translation (DataHandler hook), `supertext:localize` | `onRequest` (checks a changed key, reports `upgraded` or `api_key_check` when due) | `Typo3Reporting::later()`: a shutdown function, after `fastcgi_finish_request()` on PHP-FPM; never on front-end page views |
+| A translation got 401/403 | `authenticationFailed` | `TranslationService` |
+
+There is no *Test connection* button and no check command, so `testConnection` and `reportCheck` aren't used.
+
+- **Options:** `plugin.name` = `Typo3-Supertext-Translation` (the GitHub repository), `plugin.version` from `ext_emconf.php` (`Configuration\ExtensionVersion`), `system` = `TYPO3` and `Typo3Version`, runtime PHP (SDK default), `siteUrl` = the base of the first site with an absolute base, else the request's installation URL (`normalizedParams->getSiteUrl()`); without either (CLI with relative site bases) nothing is reported but the key is still checked. `callbackUrl` = `<installation URL>supertext/ping` (the request's installation URL when it is on the site's host, else the site URL's origin).
+- **Setting:** `versionReports` in `ext_conf_template.txt`, combined with `SUPERTEXT_VERSION_REPORTS` by `reportsEnabled()`. `SUPERTEXT_REPORT_URL` overrides the center's URL (tests, screenshots).
+- **State:** TYPO3's registry (`sys_registry`, namespace `supertext_translation`): `reporter` (the SDK's `ReporterState` as JSON: last reported versions and key status, last failure, latest key check with the key fingerprint) and `settingsFingerprint` (SHA-256 of the extension configuration). Never the key. Storage errors are caught: reporting never breaks a save or a translation.
+- **Ping:** `Middleware\PingMiddleware` (`Configuration/RequestMiddlewares.php`, frontend stack after `normalized-params-attribute`, before `eid` and `site`) answers `GET <sitePath>supertext/ping` with the SDK's `pingResponse()` status, headers and body (404 while reports are off). Other methods and paths pass through.
 
 ## Local development
 
@@ -90,11 +115,14 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at `Tests/Docs/stand-
 
 ```bash
 composer install --no-dev        # TYPO3 core (the SDK is bundled in lib/supertext-sdk)
-php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → SDK codes; translateTexts round trip with a fake transport
-php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs)
+php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → Supertext codes (no guessing); translateTexts round trip with a fake transport
+php Tests/ReportingTest.php      # Commando Center glue: which reporter action runs when, stored state, report contents, center failures, setting + env, ping answers and middleware
+php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs); every label the code and configuration use exists
 ```
 
-CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, installs the dependencies, runs the two tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
+The tests use fake transports: they never call the live Supertext API or the Commando Center.
+
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, installs the dependencies, runs the three tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
 
 ## Demo (Railway)
 
@@ -124,6 +152,7 @@ The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the
 | `TYPO3_PROJECT_NAME` | Optional, first boot only |
 | `SUPERTEXT_API_KEY` | Supertext key used by the extension |
 | `SUPERTEXT_API_ENDPOINT` | Optional, e.g. the staging API |
+| `SUPERTEXT_VERSION_REPORTS` | Optional; `0` turns version information to the Supertext Commando Center off (default on) |
 | `TYPO3_TRUSTED_HOSTS` | Optional regex of allowed host names (default: any); on the demo it lists the Railway domain **and `healthcheck.railway.app`** (the host Railway's healthcheck sends; without it every check gets a 500) |
 | `PORT` | Port Apache listens on; `8080` on Railway, matching the domain's target port |
 | `RAILWAY_DOCKERFILE_PATH` | `demo/Dockerfile` (the build context is the repo root) |
@@ -154,6 +183,7 @@ The images in `docs/images/` are generated by `Tests/Docs/screenshots.mjs` (Play
 cd Tests/Docs && npm install && npx playwright install chromium
 npm run stand-in &
 # serve TYPO3 with SUPERTEXT_API_KEY=test-key SUPERTEXT_API_ENDPOINT=http://127.0.0.1:8765/v1/
+#   SUPERTEXT_REPORT_URL=http://127.0.0.1:8765/api/v1/report (the stand-in also answers version reports)
 # (e.g. php -S 127.0.0.1:8090 -t public with a router that sends everything else to public/index.php)
 BASE_URL=http://127.0.0.1:8090 DEMO_ADMIN_EMAIL=... DEMO_ADMIN_PASSWORD=... npm run screenshots
 ```
@@ -191,3 +221,5 @@ Releases are published by `.github/workflows/release.yml` when the version is of
 - No "retranslate" action for existing translations.
 - Human (professional) translation orders are not supported yet (the WordPress plugin has them).
 - Not yet tested on TYPO3 13.4.
+- The extension configuration has no *Test connection* button, and saving it can't be detected right away (no event): the key check runs when the configuration is opened again or the next translation runs.
+- The `extension-configuration.png` screenshot predates the Status block and the *Send version information* setting; regenerate it with the screenshot script.

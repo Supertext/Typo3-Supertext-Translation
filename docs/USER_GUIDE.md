@@ -63,13 +63,20 @@ The page's URL (slug) is rebuilt from the translated title, e.g. `/about-us` →
 
 ## Formal and informal language
 
-Your administrator can set each language to formal (*Sie/vous*) or informal (*du/tu*). Ask them if the tone doesn't fit your site.
+Your administrator can set each language to formal (*Sie/vous/Lei*) or informal (*du/tu*), for the languages where Supertext offers it (for example German, French and Italian, but not English). Ask them if the tone doesn't fit your site.
 
 ## When something goes wrong
 
 The extension's messages appear in your backend interface language (English, German, French or Italian; set in your user settings).
 
 If Supertext can't translate (no API key, network problem, quota reached), you'll see a yellow warning. The records are still created — as untranslated copies with TYPO3's usual *[Translate to …]* prefix — so you can translate by hand, or delete them and try again later. A missing or rejected API key is for your administrator to fix (see the [installation guide](INSTALLATION.md#3-set-the-api-key)).
+
+Two messages are about the language settings, also for your administrator:
+
+| Message | What it means |
+| --- | --- |
+| *Deutsch: The language de has no Supertext language yet. Ask your administrator to map it …* | Supertext only accepts its own language codes, and nobody has chosen one for this site language yet (for example whether `de` means German for Germany or for Switzerland). Nothing was sent to Supertext. Once your administrator has chosen the Supertext language, delete the untranslated copies and translate again. |
+| *Supertext offers no formal or informal tone for this language …* | The language is set to formal or informal, but Supertext has no such choice for it (for example English). Your administrator sets its tone to *Default*. |
 
 ## Tips
 

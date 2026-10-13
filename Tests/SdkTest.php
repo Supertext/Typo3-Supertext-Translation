@@ -2,19 +2,20 @@
 
 // Checks the glue between the extension and the Supertext SDK (needs `composer install`):
 //   php Tests/SdkTest.php
-// The SDK has its own tests for the protocol, HTML packing and language codes.
+// The SDK has its own tests for the protocol, HTML packing and the language list.
 declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use Supertext\Typo3Translation\Sdk\Client;
+use Supertext\Typo3Translation\Localization\Labels;
 use Supertext\Typo3Translation\Sdk\Http\HttpRequest;
 use Supertext\Typo3Translation\Sdk\Http\HttpResponse;
 use Supertext\Typo3Translation\Sdk\Http\HttpTransport;
-use Supertext\Typo3Translation\Sdk\LanguageCodes;
-use Supertext\Typo3Translation\Sdk\Segment;
-use Supertext\Typo3Translation\Sdk\SupertextException;
-use Supertext\Typo3Translation\Localization\Labels;
+use Supertext\Typo3Translation\Sdk\V1\Client;
+use Supertext\Typo3Translation\Sdk\V1\Languages;
+use Supertext\Typo3Translation\Sdk\V1\Segment;
+use Supertext\Typo3Translation\Sdk\V1\SupertextException;
+use Supertext\Typo3Translation\Service\LanguageResolver;
 
 $failures = [];
 $check = static function (string $name, mixed $actual, mixed $expected) use (&$failures): void {
@@ -35,13 +36,30 @@ foreach ($codes as $code) {
     }
 }
 
-// 2. TYPO3 locales, as LanguageResolver hands them to the SDK (encoding stripped).
-$strip = static fn(string $locale): string => trim((string)preg_replace('/[.@].*$/', '', $locale));
-$check('target de_CH.UTF-8', LanguageCodes::target($strip('de_CH.UTF-8')), 'de-CH');
-$check('target fr_FR.UTF-8@euro', LanguageCodes::target($strip('fr_FR.UTF-8@euro')), 'fr-FR');
-$check('target bare de', LanguageCodes::target($strip('de')), 'de-DE');
-$check('source en_US.UTF-8', LanguageCodes::source($strip('en_US.UTF-8')), 'en');
-$check('target variant dropped', LanguageCodes::target($strip('de_DE_formal')), 'de-DE');
+// 2. TYPO3 locales, as LanguageResolver hands them to the SDK (encoding stripped): no guessing.
+$strip = static fn(string $locale): string => LanguageResolver::stripEncoding($locale);
+$target = static function (string $locale, string $override = ''): string {
+    try {
+        return LanguageResolver::targetCode($locale, $override);
+    } catch (SupertextException $e) {
+        return $e->errorCode . ':' . $e->targetLang;
+    }
+};
+$check('target de_CH.UTF-8', $target($strip('de_CH.UTF-8')), 'de-CH');
+$check('target fr_FR.UTF-8@euro', $target($strip('fr_FR.UTF-8@euro')), 'fr-FR');
+$check('target bare de is not guessed', $target($strip('de')), 'unsupported_language:de');
+$check('target bare de mapped', $target('de', 'de-CH'), 'de-CH');
+$check('target bare es (Supertext wants bare)', $target('es'), 'es');
+$check('target es_ES is not a Supertext code', $target('es_ES'), 'unsupported_language:es_ES');
+$check('target nl_NL mapped to nl', $target('nl_NL', 'nl'), 'nl');
+$check('target zh_CN is not guessed', $target('zh_CN'), 'unsupported_language:zh_CN');
+$check('mapping value sent as it is', $target('xx', 'xx-YY'), 'xx-YY');
+$check('source en_US.UTF-8', LanguageResolver::sourceCode($strip('en_US.UTF-8')), 'en');
+$check('source from a regional supertext_code', LanguageResolver::sourceCode('en_US', 'de-CH'), 'de');
+$check('source unknown', LanguageResolver::sourceCodeOrNull('xx_XX'), null);
+$check('politeness offered for de-CH', Languages::supportsPoliteness('de-CH'), true);
+$check('no politeness for en-US', Languages::supportsPoliteness('en-US'), false);
+$check('the site config select lists every Supertext target', count(Languages::TARGETS) > 30, true);
 
 // 3. translateTexts round trip with a fake transport that "translates" by putting » before every text node.
 $transport = new class implements HttpTransport {
@@ -72,12 +90,12 @@ $result = $client->translateTexts([
     3 => new Segment("Fish & Chips\nfor two", false),
     7 => new Segment('<p>We ship <strong>Swiss chocolate</strong>.</p>', true),
     9 => new Segment('  ', false),
-], 'de_CH', 'en-US', 'more');
+], 'de-CH', 'en', 'more');
 $check('plain text segment', $result[3] ?? null, "»Fish & Chips\n»for two");
 $check('html segment', $result[7] ?? null, '<p>»We ship <strong>»Swiss chocolate</strong>».</p>');
 $check('blank segment unchanged', $result[9] ?? null, '  ');
 $check('keys kept in order', array_keys($result), [3, 7, 9]);
-$check('target sent regional', $transport->fields['target_lang'] ?? null, 'de-CH');
+$check('target sent as given', $transport->fields['target_lang'] ?? null, 'de-CH');
 $check('source sent bare', $transport->fields['source_lang'] ?? null, 'en');
 $check('politeness sent', $transport->fields['politeness'] ?? null, 'more');
 
@@ -95,6 +113,10 @@ try {
     $check('unknown language: error code', $e->errorCode, SupertextException::INVALID_LANGUAGE_PAIR);
     $check('unknown language: label', $labels[$e->errorCode] ?? null, 'error.languagePair');
 }
+
+// 5. The SDK's unsupported_language / unsupported_feature errors have their own labels.
+$check('unsupported_language label', $labels[SupertextException::UNSUPPORTED_LANGUAGE] ?? null, 'error.unsupportedLanguage');
+$check('unsupported_feature label', $labels[SupertextException::UNSUPPORTED_FEATURE] ?? null, 'error.unsupportedFeature');
 
 foreach ($failures as $failure) {
     fwrite(STDERR, $failure . "\n");

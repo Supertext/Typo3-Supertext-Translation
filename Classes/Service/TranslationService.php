@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Supertext\Typo3Translation\Service;
 
 use Psr\Log\LoggerInterface;
-use Supertext\Typo3Translation\Sdk\Segment;
 use Supertext\Typo3Translation\Api\SupertextClientFactory;
 use Supertext\Typo3Translation\Configuration\ExtensionSettings;
 use Supertext\Typo3Translation\Localization\Labels;
+use Supertext\Typo3Translation\Reporting\Reporting;
+use Supertext\Typo3Translation\Reporting\Typo3Reporting;
+use Supertext\Typo3Translation\Sdk\V1\Segment;
+use Supertext\Typo3Translation\Sdk\V1\SupertextException;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
@@ -34,6 +37,7 @@ final class TranslationService
         private readonly LanguageResolver $languageResolver,
         private readonly ExtensionSettings $settings,
         private readonly LoggerInterface $logger,
+        private readonly Typo3Reporting $reporting,
     ) {}
 
     /**
@@ -43,6 +47,8 @@ final class TranslationService
     {
         $result = new TranslationResult();
         $labels = Labels::forUser($backendUser);
+        // Version report / key check after the response (Commando Center); never blocks.
+        $this->reporting->later();
         if (!$this->clientFactory->hasApiKey()) {
             $result->errors[] = $labels->get('error.noApiKey');
             return $result;
@@ -58,7 +64,14 @@ final class TranslationService
                 continue;
             }
             $pageId = $job['table'] === 'pages' ? $job['source'] : (int)$source['pid'];
-            $language = $this->languageResolver->resolve($pageId, $job['language']);
+            try {
+                $language = $this->languageResolver->resolve($pageId, $job['language']);
+            } catch (SupertextException $e) {
+                // The language has no Supertext code: nothing is sent; one message per language.
+                $title = $this->languageResolver->titleOf($pageId, $job['language']);
+                $result->errors[] = ($title !== '' ? $title . ': ' : '') . $labels->forException($e);
+                continue;
+            }
             if ($language === null) {
                 $result->errors[] = $labels->get('error.noSiteLanguage', $job['table'], $job['source'], $job['language']);
                 continue;
@@ -102,6 +115,9 @@ final class TranslationService
             } catch (\Throwable $e) {
                 $this->logger->error('Supertext translation failed', ['exception' => $e, 'language' => $language['target']]);
                 $result->errors[] = sprintf('%s: %s', $language['title'], $labels->forException($e));
+                if ($e instanceof SupertextException && $e->errorCode === SupertextException::AUTHENTICATION_FAILURE) {
+                    $this->reporting->later(Reporting::ACTION_AUTHENTICATION_FAILED, $e->status ?? 401);
+                }
                 continue;
             }
             foreach ($group['segments'] as $i => $segment) {
@@ -121,6 +137,7 @@ final class TranslationService
         if ($datamap !== []) {
             $this->write($datamap, $backendUser, $result);
         }
+        $result->errors = array_values(array_unique($result->errors));
         return $result;
     }
 

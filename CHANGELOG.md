@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Changed: **no more guessed language codes.** Supertext accepts only its own codes (regional for German, English, French, Italian and Portuguese, e.g. `de-CH`; bare for most others, e.g. `es`, `nl`, `sl`; `zh-Hans`, `sr-Latn`). A site language is sent with its `supertext_code`, else its locale if that is a Supertext code; otherwise the translation into it stops with *The language … has no Supertext language yet* and nothing is sent. Locales without region no longer get a default region (`de` → `de-DE`, `es` → `es-ES`, …; several of those were rejected by Supertext). After updating, check the new Status block and map the languages it marks as *Not mapped*.
+- Added: a *Supertext* palette in the site language form (Sites → Setup → Languages) to choose the Supertext language from the list of Supertext languages and the tone; stored as `supertext_code` / `supertext_politeness` as before.
+- Added: a *Status* block at the top of the extension configuration: the latest API key check with its time, whether version information is sent (with the ping address), and every site language with the Supertext code it is sent as (unmapped languages and a tone a language doesn't offer are marked).
+- Added: automatic API key check (Supertext's cost-free `features` call) after the configuration was saved, when the key changes and when Supertext rejects the key during a translation; the result shows in the Status block, with the links to create a Supertext account and to generate a key.
+- Added: setting *Send version information to Supertext* (on by default; `SUPERTEXT_VERSION_REPORTS=0` turns it off): sends the site URL and the extension, TYPO3, PHP and SDK versions, whether a key is set and the key check result to the Supertext Commando Center after a configuration save and an update. No content, no API key, no personal data. Never slows down or breaks a save or a translation.
+- Added: public ping endpoint `GET /supertext/ping?challenge=…` (answers 404 while version information is off), so Supertext can see that the site is reachable.
+- Added: messages for a language without Supertext language and for a tone Supertext doesn't offer for a language, in English, German, French and Italian.
+- Changed: bundled Supertext SDK 0.2.0 (`c66cb4d`, API classes in the `V1` namespace). The User-Agent now carries the version from `ext_emconf.php`.
 - Changed: the extension now talks to Supertext through the official [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-and-Guide) instead of its own API client, HTML packer and language code rules. The SDK is bundled in the extension (`lib/supertext-sdk`), so there is nothing extra to install. Same behaviour; requests go through TYPO3's HTTP client as before.
 - Added: clear messages when Supertext rejects a language pair or returns an incomplete translation (in English, German, French and Italian).
 - Demo: TYPO3 14.3.9 (security update).
