@@ -6,6 +6,8 @@
 - Added: clear messages when Supertext rejects a language pair or returns an incomplete translation (in English, German, French and Italian).
 - Demo: TYPO3 14.3.9 (security update).
 - Fixed: target languages whose locale has no region (e.g. `de`) are now sent to Supertext as a regional code (`de-DE`, `fr-FR`, `en-US`, …), which Supertext requires; a `supertext_code` override is normalized (`de_ch` → `de-CH`). The source is always sent without region.
+- Fixed: a target language Supertext doesn't know is now reported as an unsupported language pair (was: *file not found*).
+- Fixed: locale variants such as `de_DE_formal` (in a `supertext_code`) are sent to Supertext as `de-DE`.
 - Added: French and Italian interface (and German where it was missing): the extension configuration and the messages after a translation follow the backend user's language. The authentication-failed message now also links to Supertext account signup.
 
 ## 0.1.0 — 2026-10-07

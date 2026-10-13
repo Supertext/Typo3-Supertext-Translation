@@ -41,6 +41,7 @@ $check('target de_CH.UTF-8', LanguageCodes::target($strip('de_CH.UTF-8')), 'de-C
 $check('target fr_FR.UTF-8@euro', LanguageCodes::target($strip('fr_FR.UTF-8@euro')), 'fr-FR');
 $check('target bare de', LanguageCodes::target($strip('de')), 'de-DE');
 $check('source en_US.UTF-8', LanguageCodes::source($strip('en_US.UTF-8')), 'en');
+$check('target variant dropped', LanguageCodes::target($strip('de_DE_formal')), 'de-DE');
 
 // 3. translateTexts round trip with a fake transport that "translates" by putting » before every text node.
 $transport = new class implements HttpTransport {
@@ -79,6 +80,21 @@ $check('keys kept in order', array_keys($result), [3, 7, 9]);
 $check('target sent regional', $transport->fields['target_lang'] ?? null, 'de-CH');
 $check('source sent bare', $transport->fields['source_lang'] ?? null, 'en');
 $check('politeness sent', $transport->fields['politeness'] ?? null, 'more');
+
+// 4. A language Supertext doesn't know at all (HTTP 404 INVALID_LANGUAGE_PAIR) gets the language pair label.
+$unknown = new Client('test', transport: new class implements HttpTransport {
+    public function send(HttpRequest $request): HttpResponse
+    {
+        return new HttpResponse(404, '{"error_code":"INVALID_LANGUAGE_PAIR","source_lang":"en","target_lang":"xx-YY"}', ['content-type' => 'application/json']);
+    }
+}, sleep: static function (): void {});
+try {
+    $unknown->submit('<p data-st-id="0">Hi</p>', 'xx-YY', 'en');
+    $failures[] = 'unknown language: expected an error';
+} catch (SupertextException $e) {
+    $check('unknown language: error code', $e->errorCode, SupertextException::INVALID_LANGUAGE_PAIR);
+    $check('unknown language: label', $labels[$e->errorCode] ?? null, 'error.languagePair');
+}
 
 foreach ($failures as $failure) {
     fwrite(STDERR, $failure . "\n");
