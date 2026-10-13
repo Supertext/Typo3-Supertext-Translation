@@ -20,11 +20,12 @@ A ready-to-run container with TYPO3 14.3, demo content in English, German and Fr
 
 The extension is not on Packagist yet. Install it from GitHub or from a local folder.
 
-**From GitHub** — add the repository to your project's `composer.json`, then require it:
+**From GitHub** — add the repository and the [Supertext SDK](https://github.com/Supertext/Supertext-API-SDK-and-Guide) (which the extension uses to talk to Supertext, also not on Packagist yet) to your project's `composer.json`, then require both:
 
 ```bash
 composer config repositories.supertext-typo3 vcs https://github.com/Supertext/Typo3-Supertext-Translation
-composer require supertext/typo3-translation:dev-main
+composer config repositories.supertext-sdk '{"type": "vcs", "url": "https://github.com/Supertext/Supertext-API-SDK-and-Guide", "no-api": true}'
+composer require supertext/supertext-sdk:dev-main supertext/typo3-translation:dev-main
 ```
 
 The repository is private for now, so Composer needs a GitHub token with read access (`composer config --global github-oauth.github.com <token>`).
@@ -32,8 +33,8 @@ The repository is private for now, so Composer needs a GitHub token with read ac
 **From a local folder** — the TYPO3 base distribution already reads packages from `packages/*`:
 
 ```bash
-# copy or clone the repo to packages/supertext_translation, then
-composer require supertext/typo3-translation:@dev
+# copy or clone the repo to packages/supertext_translation, add the SDK repository as above, then
+composer require supertext/supertext-sdk:dev-main supertext/typo3-translation:@dev
 ```
 
 ## 2. Activate it
@@ -106,7 +107,7 @@ vendor/bin/typo3 supertext:localize <page-uid> <language-id>
 ## Updating
 
 ```bash
-composer update supertext/typo3-translation
+composer update supertext/typo3-translation supertext/supertext-sdk
 vendor/bin/typo3 extension:setup -e supertext_translation
 vendor/bin/typo3 cache:flush
 ```
@@ -114,7 +115,7 @@ vendor/bin/typo3 cache:flush
 ## Uninstalling
 
 ```bash
-composer remove supertext/typo3-translation
+composer remove supertext/typo3-translation supertext/supertext-sdk
 vendor/bin/typo3 cache:flush
 ```
 
@@ -129,6 +130,8 @@ Existing translations stay untouched; only automatic translation stops.
 | *Authentication failed* | The key is wrong or revoked. Check it, or generate a new one at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (Admin role required). |
 | *has no site language N* | The page isn't inside a site, or the language isn't defined in that site's configuration. |
 | *Timed out waiting* | Very large pages; raise `pollTimeout` (and PHP's `max_execution_time`). |
+| *Supertext does not support this language pair* | Supertext rejected the source/target combination. Check the target language's locale or `supertext_code` (a regional code such as `de-CH`) and the default language's locale. |
+| *The translation from Supertext was empty or incomplete* | Supertext answered without some of the texts. Translate again; if it persists, contact Supertext support with the log entry. |
 | *Could not reach Supertext* | The server can't make outbound HTTPS calls; check firewall/proxy (`$GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy']`). |
 
 Errors are also written to the TYPO3 log (`var/log/typo3_*.log`).

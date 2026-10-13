@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Service;
 
-use Supertext\Typo3Translation\Api\LanguageCodes;
+use Supertext\Sdk\LanguageCodes;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Site\SiteFinder;
@@ -15,7 +15,7 @@ use TYPO3\CMS\Core\Site\SiteFinder;
  * Target: the site language's locale with its region (de_CH.UTF-8 => "de-CH"); a
  * locale without region gets a regional default ("de" => "de-DE"), because
  * Supertext rejects bare targets. Source: the default language's bare language
- * ("en"). Rules in Api\LanguageCodes. Override per language in
+ * ("en"). The rules are the Supertext SDK's LanguageCodes. Override per language in
  * config/sites/<site>/config.yaml:
  *
  *   languages:
@@ -43,21 +43,22 @@ final class LanguageResolver
         $politeness = (string)($config['supertext_politeness'] ?? 'default');
 
         return [
-            'target' => LanguageCodes::target($this->localeOf($target), $this->overrideOf($target)),
-            'source' => LanguageCodes::source($this->localeOf($site->getDefaultLanguage()), $this->overrideOf($site->getDefaultLanguage())),
+            'target' => LanguageCodes::target($this->codeOf($target)),
+            'source' => LanguageCodes::source($this->codeOf($site->getDefaultLanguage())),
             'politeness' => in_array($politeness, ['more', 'less'], true) ? $politeness : 'default',
             'title' => $target->getTitle(),
         ];
     }
 
-    private function overrideOf(SiteLanguage $language): string
+    /** The language's supertext_code, else its locale without encoding or modifier ("de_CH.UTF-8" => "de_CH"). */
+    private function codeOf(SiteLanguage $language): string
     {
-        return trim((string)($language->toArray()['supertext_code'] ?? ''));
-    }
-
-    private function localeOf(SiteLanguage $language): string
-    {
+        $override = trim((string)($language->toArray()['supertext_code'] ?? ''));
+        if ($override !== '') {
+            return $override;
+        }
         $name = $language->getLocale()->getName();
-        return $name !== '' ? $name : $language->getLocale()->getLanguageCode();
+        $locale = $name !== '' ? $name : $language->getLocale()->getLanguageCode();
+        return trim((string)preg_replace('/[.@].*$/', '', $locale));
     }
 }

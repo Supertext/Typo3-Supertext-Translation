@@ -72,8 +72,8 @@
 				<target>Délai dépassé en attendant la traduction Supertext.</target>
 			</trans-unit>
 			<trans-unit id="error.empty" approved="yes">
-				<source>The translated document was empty.</source>
-				<target>Le document traduit était vide.</target>
+				<source>The translation from Supertext was empty or incomplete.</source>
+				<target>La traduction de Supertext était vide ou incomplète.</target>
 			</trans-unit>
 			<trans-unit id="error.unreachable" approved="yes">
 				<source>Could not reach Supertext: %s</source>
@@ -82,6 +82,10 @@
 			<trans-unit id="error.authentication" approved="yes">
 				<source>Authentication failed. Please check the Supertext API key. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, requires the Admin role).</source>
 				<target>Échec de l'authentification. Veuillez vérifier la clé API Supertext. Pas encore de compte Supertext ? Créez-en un sur https://www.supertext.com/person/en/account/signin . Générez votre clé API sur https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, rôle Admin requis).</target>
+			</trans-unit>
+			<trans-unit id="error.languagePair" approved="yes">
+				<source>Supertext does not support this language pair. Check the locale of the site languages or their supertext_code.</source>
+				<target>Supertext ne prend pas en charge cette paire de langues. Vérifiez la locale des langues du site ou leur supertext_code.</target>
 			</trans-unit>
 			<trans-unit id="error.notFound" approved="yes">
 				<source>The requested Supertext resource was not found.</source>

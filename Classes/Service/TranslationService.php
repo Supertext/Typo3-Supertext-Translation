@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Supertext\Typo3Translation\Service;
 
 use Psr\Log\LoggerInterface;
-use Supertext\Typo3Translation\Api\HtmlDocument;
-use Supertext\Typo3Translation\Api\SupertextClient;
+use Supertext\Sdk\Segment;
+use Supertext\Typo3Translation\Api\SupertextClientFactory;
 use Supertext\Typo3Translation\Configuration\ExtensionSettings;
 use Supertext\Typo3Translation\Localization\Labels;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
@@ -20,8 +20,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * Translates freshly localized records with Supertext and writes the result back.
  *
  * All records of one DataHandler run that share a target language go to Supertext
- * as ONE document (split only beyond ~900k characters), so translating a page with
- * twenty content elements is a single API round trip.
+ * as ONE document (the Supertext SDK splits only beyond ~900k characters), so
+ * translating a page with twenty content elements is a single API round trip.
  */
 final class TranslationService
 {
@@ -29,7 +29,7 @@ final class TranslationService
     public static bool $running = false;
 
     public function __construct(
-        private readonly SupertextClient $client,
+        private readonly SupertextClientFactory $clientFactory,
         private readonly FieldCollector $fieldCollector,
         private readonly LanguageResolver $languageResolver,
         private readonly ExtensionSettings $settings,
@@ -43,7 +43,7 @@ final class TranslationService
     {
         $result = new TranslationResult();
         $labels = Labels::forUser($backendUser);
-        if (!$this->client->hasApiKey()) {
+        if (!$this->clientFactory->hasApiKey()) {
             $result->errors[] = $labels->get('error.noApiKey');
             return $result;
         }
@@ -86,29 +86,33 @@ final class TranslationService
         }
 
         $datamap = $verbatim;
+        $client = null;
         foreach ($groups as $group) {
             if (empty($group['segments'])) {
                 continue;
             }
             $language = $group['language'];
-            foreach ($this->chunk($group['segments']) as $chunk) {
-                try {
-                    $translated = $this->translateChunk($chunk, $language);
-                } catch (\Throwable $e) {
-                    $this->logger->error('Supertext translation failed', ['exception' => $e, 'language' => $language['target']]);
-                    $result->errors[] = sprintf('%s: %s', $language['title'], $labels->forException($e));
+            $texts = [];
+            foreach ($group['segments'] as $i => $segment) {
+                $texts[$i] = new Segment($segment['text'], $segment['html']);
+            }
+            try {
+                $client ??= $this->clientFactory->create();
+                $translated = $client->translateTexts($texts, $language['target'], $language['source'], $language['politeness']);
+            } catch (\Throwable $e) {
+                $this->logger->error('Supertext translation failed', ['exception' => $e, 'language' => $language['target']]);
+                $result->errors[] = sprintf('%s: %s', $language['title'], $labels->forException($e));
+                continue;
+            }
+            foreach ($group['segments'] as $i => $segment) {
+                if (trim($translated[$i] ?? '') === '') {
                     continue;
                 }
-                foreach ($chunk as $i => $segment) {
-                    if (!isset($translated[$i]) || $translated[$i] === '') {
-                        continue;
-                    }
-                    $datamap[$segment['table']][$segment['uid']][$segment['field']] = $translated[$i];
-                    $result->fields++;
-                    $result->records[$segment['table'] . ':' . $segment['uid']] = true;
-                }
-                $result->languages[$language['title']] = $language['target'];
+                $datamap[$segment['table']][$segment['uid']][$segment['field']] = $translated[$i];
+                $result->fields++;
+                $result->records[$segment['table'] . ':' . $segment['uid']] = true;
             }
+            $result->languages[$language['title']] = $language['target'];
             if ($this->settings->shouldRegenerateSlugs()) {
                 $this->addSlugs($datamap, $group['records']);
             }
@@ -118,53 +122,6 @@ final class TranslationService
             $this->write($datamap, $backendUser, $result);
         }
         return $result;
-    }
-
-    /**
-     * @param list<array{table: string, uid: int, field: string, text: string, html: bool}> $chunk
-     * @param array{target: string, source: string, politeness: string, title: string} $language
-     * @return array<int, string>
-     */
-    private function translateChunk(array $chunk, array $language): array
-    {
-        $segments = [];
-        $isHtml = [];
-        foreach ($chunk as $i => $segment) {
-            $segments[$i] = ['text' => $segment['text'], 'html' => $segment['html']];
-            $isHtml[$i] = $segment['html'];
-        }
-        $translatedHtml = $this->client->translateDocument(
-            HtmlDocument::build($segments),
-            $language['target'],
-            $language['source'],
-            $language['politeness'],
-        );
-        return HtmlDocument::parse($translatedHtml, $isHtml);
-    }
-
-    /**
-     * @param list<array{table: string, uid: int, field: string, text: string, html: bool}> $segments
-     * @return list<list<array{table: string, uid: int, field: string, text: string, html: bool}>>
-     */
-    private function chunk(array $segments): array
-    {
-        $chunks = [];
-        $current = [];
-        $size = 0;
-        foreach ($segments as $segment) {
-            $length = mb_strlen($segment['text']) + 40;
-            if ($current !== [] && $size + $length > SupertextClient::MAX_DOCUMENT_CHARACTERS) {
-                $chunks[] = $current;
-                $current = [];
-                $size = 0;
-            }
-            $current[] = $segment;
-            $size += $length;
-        }
-        if ($current !== []) {
-            $chunks[] = $current;
-        }
-        return $chunks;
     }
 
     /**

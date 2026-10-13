@@ -5,27 +5,42 @@
     "license": "GPL-2.0-or-later",
     "homepage": "https://www.supertext.com",
     "authors": [
-        { "name": "Supertext AG", "homepage": "https://www.supertext.com" }
+        {
+            "name": "Supertext AG",
+            "homepage": "https://www.supertext.com"
+        }
     ],
     "require": {
-        "php": "^8.2",
         "ext-dom": "*",
-        "typo3/cms-core": "^13.4 || ^14.3",
-        "typo3/cms-backend": "^13.4 || ^14.3"
+        "php": "^8.2",
+        "supertext/supertext-sdk": "^0.1 || dev-main",
+        "typo3/cms-backend": "^13.4 || ^14.3",
+        "typo3/cms-core": "^13.4 || ^14.3"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1"
     },
     "autoload": {
-        "psr-4": { "Supertext\\Typo3Translation\\": "Classes/" }
+        "psr-4": {
+            "Supertext\\Typo3Translation\\": "Classes/"
+        }
     },
     "extra": {
-        "typo3/cms": { "extension-key": "supertext_translation" }
+        "typo3/cms": {
+            "extension-key": "supertext_translation"
+        }
     },
     "config": {
         "allow-plugins": {
             "typo3/class-alias-loader": true,
             "typo3/cms-composer-installers": true
+        }
+    },
+    "repositories": {
+        "supertext-sdk": {
+            "type": "vcs",
+            "url": "https://github.com/Supertext/Supertext-API-SDK-and-Guide",
+            "no-api": true
         }
     }
 }

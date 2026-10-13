@@ -16,9 +16,10 @@ TYPO3 DataHandler  ── localize | copyToLanguage ──►  new records (copi
 Hooks\DataHandlerHook ──► Service\TranslationService
                               │  FieldCollector    which fields to translate (TCA)
                               │  LanguageResolver  site language → Supertext code/politeness
-                              │  HtmlDocument      pack all fields into ONE HTML document
                               ▼
-                          Api\SupertextClient  POST file → poll status → GET translation → DELETE
+                          Supertext SDK  Client::translateTexts(): pack all fields into ONE HTML
+                              │          document, POST file → poll → GET translation → DELETE
+                              │          (HTTP through Api\Typo3HttpTransport)
                               │
                               ▼
                           DataHandler datamap  write translations back (+ slugs)
@@ -27,32 +28,35 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | Class | Responsibility |
 | --- | --- |
 | `Hooks\DataHandlerHook` | Collects every record localized in a DataHandler run (from `copyMappingArray`, so inline children like `sys_file_reference` are included), triggers translation in `afterFinish`, shows flash messages. |
-| `Service\TranslationService` | Groups segments per language pair, chunks at ~900k characters, writes results through a second DataHandler run (guarded by `TranslationService::$running` to avoid recursion), regenerates page slugs, keeps skipped code fields verbatim. |
+| `Service\TranslationService` | Groups segments per language pair, sends each pair's fields as keyed texts to the SDK's `translateTexts()` (which splits only above ~900k characters), writes results through a second DataHandler run (guarded by `TranslationService::$running` to avoid recursion), regenerates page slugs, keeps skipped code fields verbatim. |
 | `Service\FieldCollector` | TCA-driven field selection: `input`/`text`, not `l10n_mode=exclude`, not read-only, no numeric/date/email evals, no code editors, no technical reference fields (`sys_file_reference.tablenames`/`fieldname`/`table_local`, link `target`); detects rich text. |
 | `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code` or the locale, see *Language codes*), source (default language's bare language), politeness. |
-| `Api\LanguageCodes` | The language code rules (bare source, regional target with defaults); no TYPO3 classes. |
-| `Api\HtmlDocument` | Builds `<div data-st-id="N">…</div>` documents and parses them back; plain text is escaped and line breaks travel as `<br>`. |
-| `Api\SupertextClient` | Supertext AI file translation API v1. |
+| `Api\SupertextClientFactory` | Creates the SDK's `Supertext\Sdk\Client` from the extension configuration (key, endpoint, poll interval and timeout, User-Agent `TYPO3-Supertext-Translation/<version>`). |
+| `Api\Typo3HttpTransport` | The SDK's `HttpTransport` over TYPO3's `RequestFactory`, so `$GLOBALS['TYPO3_CONF_VARS']['HTTP']` (proxy, TLS, timeouts) applies and ext-curl isn't required. |
 | `Command\LocalizeCommand` | `supertext:localize <page> <language> [--recursive]`. |
-| `Localization\Labels` | Messages in the backend user's language from `Resources/Private/Language/locallang.xlf`; translates `Api\SupertextException`s by their `labelKey`. |
+| `Localization\Labels` | Messages in the backend user's language from `Resources/Private/Language/locallang.xlf`; translates the SDK's `SupertextException`s by their `errorCode` (`Labels::ERROR_LABELS`). |
 | `Configuration\ExtensionSettings` | Typed extension configuration plus `SUPERTEXT_API_KEY` / `SUPERTEXT_API_ENDPOINT` env overrides. |
 
 ## Supertext API protocol
 
-Shared with the WordPress plugin and every other Supertext CMS plugin:
+The extension talks to Supertext through the official **Supertext SDK for PHP** ([`supertext/supertext-sdk`](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php), MIT, no dependencies). The SDK implements the protocol below, the HTML packing (one `data-st-id` element per field), the language code rules and the 429 retries; it is tested against the shared test vectors of all Supertext SDKs. The extension only collects fields, maps languages and writes the results back.
+
+The SDK is not on Packagist yet: `composer.json` requires `supertext/supertext-sdk: ^0.1 || dev-main` and lists the SDK repository as a VCS repository (`no-api: true`, so Composer clones it with git instead of using the GitHub API). Projects add the same repository (see the installation guide). Once the SDK is on Packagist, drop the repository entries and the `dev-main` alternative.
+
+The protocol, shared with the WordPress plugin and every other Supertext CMS plugin:
 
 1. `POST {base}translate/ai/file` — multipart: `file` (part `Content-Type` exactly `text/html`, no charset, or the API answers 415), `target_lang` (regional code, e.g. `de-CH`), optional `source_lang` (bare language, e.g. `de`; see *Language codes*), optional `politeness` (`more`/`less`) → `{file_id}`
 2. `GET …/{file_id}/status` until `done` (`error`, `limit_exceeded`, `deleted` are terminal)
 3. `GET …/{file_id}/translation` → translated HTML
 4. `DELETE …/{file_id}` (files also expire after 24 h)
 
-Auth header: `Authorization: Supertext-Auth-Key <key>`. The key may be configured with or without the `Supertext-Auth-Key ` prefix; the client strips it and always sends exactly one. The header name must be `Authorization` (the live API answers 403 to `Authentication`).
+Auth header: `Authorization: Supertext-Auth-Key <key>`. The key may be configured with or without the `Supertext-Auth-Key ` prefix; the SDK strips it and always sends exactly one. The header name must be `Authorization` (the live API answers 403 to `Authentication`).
 
-**Rate limit:** the API limits requests per second per key (HTTP 429, `RATE_LIMIT_EXCEEDED`); translating into several languages at once hits it. The client retries a 429 up to 4 times, waiting for `Retry-After` if sent, otherwise 1, 2, 4 and 8 seconds (plus jitter), before reporting *Too many requests*. Base URLs: `https://api.supertext.com/v1/` (live), `api.staging…`, `api.testing…`.
+**Rate limit:** the API limits requests per second per key (HTTP 429, `RATE_LIMIT_EXCEEDED`); translating into several languages at once hits it. The SDK retries a 429 up to 4 times, waiting for `Retry-After` if sent, otherwise 1, 2, 4 and 8 seconds (plus jitter), before reporting *Too many requests*. Base URLs: `https://api.supertext.com/v1/` (live), `api.staging…`, `api.testing…`.
 
 ### Language codes
 
-Learned from the live API: the **source** is the bare language (`en`, `de`), the **target** a regional code (`de-DE`, `fr-CH`, `en-US`). Supertext rejects a bare target such as `de` with `INVALID_LANGUAGE_PAIR`, and a regional source too. `Api\LanguageCodes` applies the rule; `Service\LanguageResolver` feeds it the site languages:
+Learned from the live API: the **source** is the bare language (`en`, `de`), the **target** a regional code (`de-DE`, `fr-CH`, `en-US`). Supertext rejects a bare target such as `de` with `INVALID_LANGUAGE_PAIR`, and a regional source too. The SDK's `LanguageCodes` applies the rule; `Service\LanguageResolver` feeds it the site languages (locale without encoding, e.g. `de_CH.UTF-8` → `de_CH`, or the `supertext_code`):
 
 - Source: the default language's locale (or its `supertext_code`) reduced to the language: `en_US.UTF-8` → `en`.
 - Target: the target language's `supertext_code` if set, otherwise its locale. A code with a region keeps it, normalized (`de_CH.UTF-8` / `de-ch` → `de-CH`; scripts and numeric regions stay: `zh-Hant`, `es-419`). A bare code gets a regional default: ar→ar-SA, bg→bg-BG, cs→cs-CZ, da→da-DK, de→de-DE, el→el-GR, en→en-US, es→es-ES, et→et-EE, fi→fi-FI, fr→fr-FR, hr→hr-HR, hu→hu-HU, it→it-IT, ja→ja-JP, ko→ko-KR, lt→lt-LT, lv→lv-LV, nb→nb-NO, nl→nl-NL, pl→pl-PL, pt→pt-PT, ro→ro-RO, ru→ru-RU, sk→sk-SK, sl→sl-SI, sr→sr-RS, sv→sv-SE, th→th-TH, tr→tr-TR, uk→uk-UA, vi→vi-VN, zh→zh-CN (same table as the other Supertext plugins). Unknown bare codes are sent unchanged, so Supertext's error names them.
@@ -77,17 +81,17 @@ Add a second language with a locale to `config/sites/*/config.yaml`, create some
 SUPERTEXT_API_KEY=... vendor/bin/typo3 supertext:localize 1 1 --recursive
 ```
 
-To test without a real key, point `SUPERTEXT_API_ENDPOINT` at a mock that implements the four calls above (one that prefixes every text node with `[<lang>] ` is enough to see the round trip).
+To test without a real key, point `SUPERTEXT_API_ENDPOINT` at `Tests/Docs/stand-in.mjs` or the SDK repository's `stand-in/stand-in.mjs` (`http://127.0.0.1:8765/v1/`); both prefix untranslated text with `[<lang>] `.
 
 ## Tests
 
 ```bash
-php Tests/HtmlDocumentTest.php   # HTML packing round trip, no TYPO3 needed
+composer install --no-dev        # TYPO3 core and the Supertext SDK
+php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → SDK codes; translateTexts round trip with a fake transport
 php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs)
-php Tests/LanguageCodesTest.php  # source/target language code rules, no TYPO3 needed
 ```
 
-CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, runs the three tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, installs the dependencies, runs the two tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
 
 ## Demo (Railway)
 
@@ -174,7 +178,7 @@ Releases are published by `.github/workflows/release.yml` when the version is of
 
 - Strict types, final classes, constructor injection (`Configuration/Services.yaml`).
 - Exception codes are Unix timestamps (`1759500xxx` range for the API client).
-- Interface strings live in `Resources/Private/Language/locallang.xlf` (English source) with `de.`, `fr.` and `it.locallang.xlf` (XLIFF 1.2, `approved="yes"`). `ext_conf_template.txt` labels are `LLL:` references (`Title: description`, split at the first colon); runtime messages go through `Localization\Labels`; `Api\` stays free of TYPO3 classes and only names the label (`SupertextException::$labelKey`). New or changed strings need all four languages in the same commit (formal Sie/vous/Lei, TYPO3's own terms, "Supertext", placeholders and URLs unchanged); `Tests/LanguageFilesTest.php` checks keys, placeholders and URLs.
+- Interface strings live in `Resources/Private/Language/locallang.xlf` (English source) with `de.`, `fr.` and `it.locallang.xlf` (XLIFF 1.2, `approved="yes"`). `ext_conf_template.txt` labels are `LLL:` references (`Title: description`, split at the first colon); runtime messages go through `Localization\Labels`, which maps each SDK error code to a label. New or changed strings need all four languages in the same commit (formal Sie/vous/Lei, TYPO3's own terms, "Supertext", placeholders and URLs unchanged); `Tests/LanguageFilesTest.php` checks keys, placeholders and URLs.
 - Keep the three docs in `docs/` current with every change (see `CLAUDE.md`).
 
 ## Known limitations / roadmap

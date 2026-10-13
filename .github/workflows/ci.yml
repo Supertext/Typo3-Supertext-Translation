@@ -25,12 +25,12 @@ jobs:
           coverage: none
       - name: Lint
         run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
-      - name: HTML round-trip test
-        run: php Tests/HtmlDocumentTest.php
+      - name: Install (TYPO3 core and the Supertext SDK)
+        run: composer install --no-dev --no-interaction --no-progress
+      - name: Supertext SDK glue test
+        run: php Tests/SdkTest.php
       - name: Interface translations test
         run: php Tests/LanguageFilesTest.php
-      - name: Language codes test
-        run: php Tests/LanguageCodesTest.php
       - name: Demo entrypoint syntax
         run: sh -n demo/entrypoint.sh
 

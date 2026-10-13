@@ -55,13 +55,16 @@
 				<source>Timed out waiting for the Supertext translation.</source>
 			</trans-unit>
 			<trans-unit id="error.empty">
-				<source>The translated document was empty.</source>
+				<source>The translation from Supertext was empty or incomplete.</source>
 			</trans-unit>
 			<trans-unit id="error.unreachable">
 				<source>Could not reach Supertext: %s</source>
 			</trans-unit>
 			<trans-unit id="error.authentication">
 				<source>Authentication failed. Please check the Supertext API key. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin . Generate your API key at https://www.supertext.com/en/integrations/api (supertext.com → Integrations → API, requires the Admin role).</source>
+			</trans-unit>
+			<trans-unit id="error.languagePair">
+				<source>Supertext does not support this language pair. Check the locale of the site languages or their supertext_code.</source>
 			</trans-unit>
 			<trans-unit id="error.notFound">
 				<source>The requested Supertext resource was not found.</source>

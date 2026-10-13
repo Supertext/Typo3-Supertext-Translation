@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Localization;
 
-use Supertext\Typo3Translation\Api\SupertextException;
+use Supertext\Sdk\SupertextException;
 use TYPO3\CMS\Core\Authentication\AbstractUserAuthentication;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
@@ -34,13 +34,40 @@ final class Labels
         return $arguments === [] ? $label : vsprintf($label, $arguments);
     }
 
-    /** The translated message of an API error, or its English message for other exceptions. */
+    /** Label key per Supertext SDK error code (SupertextException::$errorCode). */
+    private const ERROR_LABELS = [
+        SupertextException::MISSING_API_KEY => 'error.noApiKey',
+        SupertextException::AUTHENTICATION_FAILURE => 'error.authentication',
+        SupertextException::INVALID_LANGUAGE_PAIR => 'error.languagePair',
+        SupertextException::NOT_FOUND => 'error.notFound',
+        SupertextException::PAYLOAD_TOO_LARGE => 'error.tooLarge',
+        SupertextException::TOO_MANY_REQUESTS => 'error.rateLimit',
+        SupertextException::SERVICE_UNAVAILABLE => 'error.unavailable',
+        SupertextException::UNEXPECTED_STATUS => 'error.http',
+        SupertextException::TRANSPORT_ERROR => 'error.unreachable',
+        SupertextException::NO_FILE_ID => 'error.noFileId',
+        SupertextException::TRANSLATION_ERROR => 'error.failed',
+        SupertextException::QUOTA_EXCEEDED => 'error.limitExceeded',
+        SupertextException::FILE_DELETED => 'error.deleted',
+        SupertextException::TIMEOUT => 'error.timeout',
+        SupertextException::INCOMPLETE_RESPONSE => 'error.empty',
+    ];
+
+    /** The translated message of a Supertext SDK error, or the English message of other exceptions. */
     public function forException(\Throwable $e): string
     {
-        if (!$e instanceof SupertextException || $e->labelKey === '') {
+        if (!$e instanceof SupertextException || !isset(self::ERROR_LABELS[$e->errorCode])) {
             return $e->getMessage();
         }
-        $message = $this->get($e->labelKey, ...$e->arguments);
-        return $e->detail !== '' ? $message . ' (' . $e->detail . ')' : $message;
+        $detail = trim((string)$e->detail);
+        $message = match ($e->errorCode) {
+            SupertextException::UNEXPECTED_STATUS => $this->get('error.http', (int)$e->status),
+            SupertextException::TRANSPORT_ERROR => $this->get('error.unreachable', $detail),
+            default => $this->get(self::ERROR_LABELS[$e->errorCode]),
+        };
+        if ($e->errorCode === SupertextException::TRANSPORT_ERROR) {
+            return $message;
+        }
+        return $detail !== '' ? $message . ' (' . $detail . ')' : $message;
     }
 }
