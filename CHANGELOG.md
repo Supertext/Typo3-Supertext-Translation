@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added: support for PHP 8.5 (now tested in CI next to 8.2, 8.3 and 8.4).
 - Changed: **no more guessed language codes.** Supertext accepts only its own codes (regional for German, English, French, Italian and Portuguese, e.g. `de-CH`; bare for most others, e.g. `es`, `nl`, `sl`; `zh-Hans`, `sr-Latn`). A site language is sent with its `supertext_code`, else its locale if that is a Supertext code; otherwise the translation into it stops with *The language … has no Supertext language yet* and nothing is sent. Locales without region no longer get a default region (`de` → `de-DE`, `es` → `es-ES`, …; several of those were rejected by Supertext). After updating, check the new Status block and map the languages it marks as *Not mapped*.
 - Added: a *Supertext* palette in the site language form (Sites → Setup → Languages) to choose the Supertext language from the list of Supertext languages and the tone; stored as `supertext_code` / `supertext_politeness` as before.
 - Added: a *Status* block at the top of the extension configuration: the latest API key check with its time, whether version information is sent (with the ping address), and every site language with the Supertext code it is sent as (unmapped languages and a tone a language doesn't offer are marked).

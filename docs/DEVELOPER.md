@@ -122,7 +122,7 @@ php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (key
 
 The tests use fake transports: they never call the live Supertext API or the Commando Center.
 
-CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3 and 8.4, installs the dependencies, runs the three tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3, 8.4 and 8.5, installs the dependencies, runs the three tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
 
 ## Demo (Railway)
 

@@ -11,7 +11,7 @@ A ready-to-run container with TYPO3 14.3, demo content in English, German and Fr
 | | |
 | --- | --- |
 | TYPO3 | 14.3 LTS (tested), 13.4 LTS (supported, not yet tested) |
-| PHP | 8.2 or newer, with `ext-dom` |
+| PHP | 8.2 or newer (tested on 8.2–8.5), with `ext-dom` |
 | Install mode | Composer-based TYPO3 (classic/non-Composer installs are not supported yet) |
 | Supertext | An account with an API key — see [step 3](#3-set-the-api-key) |
 | Network | The web server must reach `https://api.supertext.com` over HTTPS |
