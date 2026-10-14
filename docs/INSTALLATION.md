@@ -77,7 +77,7 @@ Every site language needs a **Supertext language**. Supertext accepts exactly it
 - **Mapped:** for any other locale, choose the Supertext language in the site configuration: *Sites → Setup → edit the site → Languages → (language) → Supertext → Supertext language* (TYPO3 13: *Site Management → Sites*). The list offers every Supertext language with its name and code. Or set `supertext_code` in `config/sites/<site>/config.yaml`. Typical cases: `de` → `de-DE` or `de-CH`, `en` → `en-US` or `en-GB`, `es_ES` → `es`, `nl_NL` → `nl`, `zh_CN` → `zh-Hans`, `nb_NO` → `nb`.
 - **Not mapped:** a translation into a language that has neither stops before anything is sent to Supertext, with the message *The language … has no Supertext language yet* (the records are still localized as copies). The **Status** block in the extension configuration lists every site language with the Supertext code it is sent as and marks the ones that aren't mapped.
 
-The default language is the **source**. It is sent as a bare language: its `supertext_code` or locale reduced to the language (`en_US.UTF-8` → `en`, `de-CH` → `de`).
+The default language is the **source**. It is sent as a bare language: its `supertext_code` or locale reduced to the language (`en_US.UTF-8` → `en`, `de-CH` → `de`). One `supertext_code` serves both directions, so a language that is sometimes the default and sometimes a target needs only one.
 
 Earlier versions of this extension gave locales without region a default region (`de` → `de-DE`, `es` → `es-ES`). Supertext rejects several of those (`es-ES`, `sl-SI`, `zh-CN`), so that is gone: after updating, check the **Status** block and map the languages it marks as *Not mapped*.
 

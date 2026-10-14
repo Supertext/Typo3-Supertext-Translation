@@ -87,14 +87,15 @@ final class LanguageResolver
     }
 
     /**
-     * The Supertext source for the default language: the override or the locale, reduced to a
-     * Supertext source language (de-CH => de).
+     * The Supertext source for the default language: the SDK's Languages::source() with the same
+     * mapping, so one supertext_code serves both directions (de-CH => de); else the locale's
+     * language (en_US => en).
      *
-     * @throws SupertextException unsupported_language (sourceLang = the code)
+     * @throws SupertextException unsupported_language (sourceLang = the locale)
      */
     public static function sourceCode(string $locale, string $override = ''): string
     {
-        return Languages::source($override !== '' ? $override : $locale);
+        return Languages::source($locale, $override !== '' ? [$locale => $override] : []);
     }
 
     /** The target code, or null when the language isn't mapped (for the status overview). */

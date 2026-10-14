@@ -69,7 +69,7 @@ Supertext accepts exactly the codes of its `GET features` (the SDK's `Languages:
 `Service\LanguageResolver` resolves every site language with the SDK's `Languages` (the same rules in every Supertext plugin):
 
 - Target: `Languages::target($locale, [$locale => $supertextCode])`: the site language's `supertext_code` wins and is sent as it is; else the locale without encoding (`de_CH.UTF-8` → `de_CH`) if it equals a Supertext code apart from case and `_`/`-` (`de_CH` → `de-CH`, `es` → `es`); else the SDK's `unsupported_language` with the locale as `targetLang`. Nothing is sent then; the editor sees *The language … has no Supertext language yet* (`error.unsupportedLanguage`), one message per language.
-- Source: `Languages::source($supertextCode ?: $locale)`: the default language's code reduced to a Supertext source (`en_US` → `en`, a `supertext_code` of `de-CH` → `de`).
+- Source: `Languages::source($locale, [$locale => $supertextCode])` (the SDK sends a mapped code in its source form, so one `supertext_code` serves both directions): `en_US` → `en`, a `supertext_code` of `de-CH` → `de`, of `en-US` → `en`.
 - Politeness: `supertext_politeness` (`more`/`less`) is sent as configured. `Languages::supportsPoliteness()` is false for e.g. `en-US`, `rm`, `sq`, `sr-*`, `gsw-*`: the Status block warns, and Supertext answers `unsupported_feature` (`error.unsupportedFeature`).
 - Translating within one language (source `en`, target `en-GB`) is allowed.
 
