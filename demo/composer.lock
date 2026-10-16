@@ -2151,7 +2151,7 @@
             "dist": {
                 "type": "path",
                 "url": "./packages/supertext_translation",
-                "reference": "460c2cba8d978cfbea4d18462ea99d61dc161949"
+                "reference": "bc97dbbe9ef09504c93d2ef6ee76feb21c0acd2d"
             },
             "require": {
                 "ext-dom": "*",
@@ -2171,6 +2171,7 @@
             "autoload": {
                 "psr-4": {
                     "Supertext\\Typo3Translation\\Sdk\\": "lib/supertext-sdk/src/",
+                    "Supertext\\Typo3Translation\\PluginHealth\\": "lib/supertext-plugin-health/src/",
                     "Supertext\\Typo3Translation\\": "Classes/"
                 }
             },

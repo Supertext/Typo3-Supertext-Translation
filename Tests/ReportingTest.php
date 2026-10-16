@@ -23,8 +23,10 @@ use Supertext\Typo3Translation\Reporting\Typo3Reporting;
 use Supertext\Typo3Translation\Sdk\Http\HttpRequest;
 use Supertext\Typo3Translation\Sdk\Http\HttpResponse;
 use Supertext\Typo3Translation\Sdk\Http\HttpTransport;
-use Supertext\Typo3Translation\Sdk\V1\ApiKeyCheck;
-use Supertext\Typo3Translation\Sdk\V1\ReporterState;
+use Supertext\Typo3Translation\PluginHealth\KeyCheck;
+use Supertext\Typo3Translation\PluginHealth\ReporterState;
+use Supertext\Typo3Translation\Sdk\Supertext;
+use Supertext\Typo3Translation\Sdk\V1\Protocol;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\Response;
 use TYPO3\CMS\Core\Http\ServerRequest;
@@ -128,12 +130,14 @@ $reports = $transport->reports();
 $check('first run: event', $result?->event, 'installed');
 $check('first run: sent', $result?->sent, true);
 $check('first run: key checked once', $transport->keyChecks(), 1);
-$check('first run: key ok', $result?->check?->status, ApiKeyCheck::OK);
+$check('first run: key ok', $result?->check?->status, KeyCheck::OK);
 $check('first run: plugin name', $reports[0]['plugin'] ?? null, ['name' => 'Typo3-Supertext-Translation', 'version' => '0.1.0']);
 $check('first run: system', $reports[0]['system'] ?? null, ['name' => 'TYPO3', 'version' => '14.3.9']);
 $check('first run: site url', $reports[0]['site_url'] ?? null, 'https://www.example.ch');
 $check('first run: callback', $reports[0]['callback'] ?? null, ['url' => 'https://www.example.ch/supertext/ping']);
 $check('first run: key configured', $reports[0]['api_key_configured'] ?? null, true);
+$check('first run: SDK version', $reports[0]['sdk_version'] ?? null, Supertext::SDK_VERSION);
+$check('first run: key check User-Agent', str_contains($transport->requests[0]->headers['User-Agent'] ?? '', 'Typo3-Supertext-Translation/0.1.0'), true);
 $check('first run: settings fingerprint stored', $storage->values[Reporting::SETTINGS_KEY] ?? null, 'settings-1');
 $check('first run: state stored', ReporterState::from($storage->values[Reporting::STATE_KEY] ?? null)->reportedVersions, '0.1.0|14.3.9|' . PHP_VERSION);
 foreach ($transport->requests as $request) {
@@ -167,9 +171,9 @@ $check('upgrade: no key check', $transport->keyChecks(), 0);
 $transport->reset();
 $result = $reporting->run(Reporting::ACTION_AUTHENTICATION_FAILED, $installation('settings-2', typo3: '14.3.10'), $key, 401);
 $check('auth failed: event', $result?->event, 'api_key_check');
-$check('auth failed: status', $result?->check?->status, ApiKeyCheck::INVALID);
+$check('auth failed: status', $result?->check?->status, KeyCheck::INVALID);
 $check('auth failed: no key check request', $transport->keyChecks(), 0);
-$check('auth failed: stored for the status page', $reporting->lastCheck()?->status, ApiKeyCheck::INVALID);
+$check('auth failed: stored for the status page', $reporting->lastCheck()?->status, KeyCheck::INVALID);
 $transport->reset();
 $reporting->run(Reporting::ACTION_AUTHENTICATION_FAILED, $installation('settings-2', typo3: '14.3.10'), $key, 401);
 $check('auth failed twice: reported once', count($transport->reports()), 0);
@@ -179,7 +183,7 @@ $transport->reset();
 $transport->featuresStatus = 403;
 $result = $reporting->run(Reporting::ACTION_REQUEST, $installation('settings-3', enabled: false), $key);
 $check('off: key checked', $transport->keyChecks(), 1);
-$check('off: key invalid', $result?->check?->status, ApiKeyCheck::INVALID);
+$check('off: key invalid', $result?->check?->status, KeyCheck::INVALID);
 $check('off: nothing reported', count($transport->reports()), 0);
 $transport->featuresStatus = 200;
 
@@ -207,7 +211,7 @@ $check('center back after an hour: sent', $result?->sent, true);
 // 9. A missing key: "missing" without a request.
 $transport->reset();
 $result = $reporting->run(Reporting::ACTION_REQUEST, $installation('settings-6'), '');
-$check('missing key: status', $result?->check?->status, ApiKeyCheck::MISSING);
+$check('missing key: status', $result?->check?->status, KeyCheck::MISSING);
 $check('missing key: no key check request', $transport->keyChecks(), 0);
 $check('missing key: reported as not configured', $transport->reports()[0]['api_key_configured'] ?? null, false);
 
@@ -218,7 +222,26 @@ $check('broken storage: last check', $reporting->lastCheck(), null);
 $check('broken storage: settingsChanged', $reporting->settingsChanged($installation()), false);
 $storage->broken = false;
 
-// 11. Ping answers (the SDK's pingResponse).
+// 10b. A state stored by the SDK 0.2 reporter is read as it is: no new "installed" report.
+$storage = new MemoryStorage();
+$transport = new FakeTransport();
+$reporting = new Reporting($storage, $transport, 'https://center.test/api/v1/report', static function () use (&$clock): float {
+    return $clock;
+}, static function (): void {});
+$storage->values[Reporting::SETTINGS_KEY] = 'settings-1';
+$storage->values[Reporting::STATE_KEY] = (string)json_encode([
+    'reportedVersions' => '0.1.0|14.3.9|' . PHP_VERSION,
+    'reportedKeyStatus' => 'ok',
+    'lastFailureAt' => null,
+    'keyCheck' => ['status' => 'ok', 'checkedAt' => '2026-10-13T08:00:00Z', 'httpStatus' => 200, 'errorCode' => null, 'fingerprint' => Protocol::apiKeyFingerprint($key)],
+], JSON_UNESCAPED_SLASHES);
+$stored = $storage->values[Reporting::STATE_KEY];
+$result = $reporting->run(Reporting::ACTION_REQUEST, $installation(), $key);
+$check('SDK 0.2 state: nothing due', [$result?->event, $transport->requests], [null, []]);
+$check('SDK 0.2 state: same format', $storage->values[Reporting::STATE_KEY], $stored);
+$check('SDK 0.2 state: key check kept', $reporting->lastCheck()?->checkedAt, '2026-10-13T08:00:00Z');
+
+// 11. Ping answers (Plugin Health's pingResponse).
 $ping = Reporting::ping('abcdefghijklmnop1234', true);
 $check('ping ok: status', $ping->status, 200);
 $check('ping ok: body', $ping->body, '{"ok":true,"plugin":"Typo3-Supertext-Translation","challenge":"abcdefghijklmnop1234"}');

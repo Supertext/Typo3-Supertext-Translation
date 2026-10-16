@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Configuration;
 
-use Supertext\Typo3Translation\Sdk\V1\InstallationReporter;
+use Supertext\Typo3Translation\PluginHealth\InstallationReporter;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 
 /**

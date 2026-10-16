@@ -8,6 +8,7 @@ services:
     resource: '../Classes/*'
     exclude:
       - '../Classes/Reporting/Installation.php'
+      - '../Classes/Reporting/PluginHealthTransport.php'
       - '../Classes/Reporting/Reporting.php'
 
   Supertext\Typo3Translation\Hooks\DataHandlerHook:

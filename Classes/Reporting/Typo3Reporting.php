@@ -9,9 +9,9 @@ use Psr\Log\LoggerInterface;
 use Supertext\Typo3Translation\Api\SupertextClientFactory;
 use Supertext\Typo3Translation\Configuration\ExtensionSettings;
 use Supertext\Typo3Translation\Configuration\ExtensionVersion;
-use Supertext\Typo3Translation\Sdk\V1\ApiKeyCheck;
-use Supertext\Typo3Translation\Sdk\V1\PingResponse;
-use Supertext\Typo3Translation\Sdk\V1\ReporterResult;
+use Supertext\Typo3Translation\PluginHealth\KeyCheck;
+use Supertext\Typo3Translation\PluginHealth\PingResponse;
+use Supertext\Typo3Translation\PluginHealth\ReporterResult;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Registry;
@@ -108,7 +108,7 @@ final class Typo3Reporting
         }
     }
 
-    public function lastCheck(): ?ApiKeyCheck
+    public function lastCheck(): ?KeyCheck
     {
         return $this->reporting()->lastCheck();
     }

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Supertext\Typo3Translation\Configuration;
 
 use Supertext\Typo3Translation\Localization\Labels;
+use Supertext\Typo3Translation\PluginHealth\KeyCheck;
 use Supertext\Typo3Translation\Reporting\Typo3Reporting;
-use Supertext\Typo3Translation\Sdk\V1\ApiKeyCheck;
 use Supertext\Typo3Translation\Sdk\V1\Languages;
 use Supertext\Typo3Translation\Sdk\V1\Politeness;
 use Supertext\Typo3Translation\Service\LanguageResolver;
@@ -61,15 +61,15 @@ final class StatusField
         return $html . '</div>';
     }
 
-    public function keyCheck(Labels $labels, ?ApiKeyCheck $check): string
+    public function keyCheck(Labels $labels, ?KeyCheck $check): string
     {
         $html = '<p><strong>' . $this->e($labels->get('status.keyCheck')) . '</strong></p>';
         if ($check === null) {
             return $html . '<div class="callout callout-info"><div class="callout-body">' . $this->e($labels->get('status.notChecked')) . '</div></div>';
         }
         $severity = match ($check->status) {
-            ApiKeyCheck::OK => 'success',
-            ApiKeyCheck::INVALID, ApiKeyCheck::MISSING => 'danger',
+            KeyCheck::OK => 'success',
+            KeyCheck::INVALID, KeyCheck::MISSING => 'danger',
             default => 'warning',
         };
         $message = self::keyCheckMessage($labels, $check);
@@ -80,10 +80,10 @@ final class StatusField
     }
 
     /** The Commando Center's message for a key check, in the user's language. */
-    public static function keyCheckMessage(Labels $labels, ApiKeyCheck $check): string
+    public static function keyCheckMessage(Labels $labels, KeyCheck $check): string
     {
         return match ($check->status) {
-            ApiKeyCheck::OK, ApiKeyCheck::INVALID, ApiKeyCheck::MISSING, ApiKeyCheck::UNREACHABLE => $labels->get('keycheck.' . $check->status),
+            KeyCheck::OK, KeyCheck::INVALID, KeyCheck::MISSING, KeyCheck::UNREACHABLE => $labels->get('keycheck.' . $check->status),
             default => $labels->get('keycheck.error', (string)($check->httpStatus ?? $check->errorCode ?? '?')),
         };
     }

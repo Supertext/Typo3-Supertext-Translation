@@ -22,6 +22,7 @@
     "autoload": {
         "psr-4": {
             "Supertext\\Typo3Translation\\Sdk\\": "lib/supertext-sdk/src/",
+            "Supertext\\Typo3Translation\\PluginHealth\\": "lib/supertext-plugin-health/src/",
             "Supertext\\Typo3Translation\\": "Classes/"
         }
     },

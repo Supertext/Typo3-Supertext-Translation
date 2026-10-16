@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace Supertext\Typo3Translation\Reporting;
 
+use Supertext\Typo3Translation\PluginHealth\CallableKeyChecker;
+use Supertext\Typo3Translation\PluginHealth\InstallationReporter;
+use Supertext\Typo3Translation\PluginHealth\KeyCheck;
+use Supertext\Typo3Translation\PluginHealth\PingResponse;
+use Supertext\Typo3Translation\PluginHealth\ReporterResult;
+use Supertext\Typo3Translation\PluginHealth\ReporterState;
 use Supertext\Typo3Translation\Sdk\Http\HttpTransport;
-use Supertext\Typo3Translation\Sdk\V1\ApiKeyCheck;
-use Supertext\Typo3Translation\Sdk\V1\InstallationReporter;
-use Supertext\Typo3Translation\Sdk\V1\PingResponse;
-use Supertext\Typo3Translation\Sdk\V1\ReporterResult;
-use Supertext\Typo3Translation\Sdk\V1\ReporterState;
+use Supertext\Typo3Translation\Sdk\Supertext;
+use Supertext\Typo3Translation\Sdk\V1\Client;
+use Supertext\Typo3Translation\Sdk\V1\Protocol;
 
 /**
  * The extension's side of the Supertext Commando Center (version reports, the automatic
  * API key check and the ping endpoint; Commando-Center-Supertext-Translation ->
- * docs/DEVELOPER.md -> Report protocol). The protocol is the SDK's InstallationReporter;
- * this class only picks the action and keeps the state. No TYPO3 classes, so it is
+ * docs/DEVELOPER.md -> Report protocol). The protocol is Supertext Plugin Health's
+ * InstallationReporter (bundled in lib/supertext-plugin-health), the key check is the SDK's
+ * Client::checkApiKey(); this class only wires them together, picks the action and keeps the
+ * state. No TYPO3 classes, so it is
  * unit-tested on its own (Tests/ReportingTest.php); Typo3Reporting feeds it.
  *
  * TYPO3 has no event for "extension configuration saved", so a save is noticed by a changed
@@ -44,7 +50,7 @@ final class Reporting
 
     /**
      * @param HttpTransport|null       $transport HTTP for the key check and the report (TYPO3's client)
-     * @param string|null              $reportUrl default SUPERTEXT_REPORT_URL, else the SDK's default (tests)
+     * @param string|null              $reportUrl default SUPERTEXT_REPORT_URL, else Plugin Health's default (tests)
      * @param (callable(): float)|null $now       wall clock (tests)
      * @param (callable(float): void)|null $sleep 429 waits of the key check (tests)
      */
@@ -73,11 +79,27 @@ final class Reporting
             pluginName: self::PLUGIN_NAME,
             pluginVersion: $installation->pluginVersion,
             systemName: self::SYSTEM_NAME,
+            keyChecker: new CallableKeyChecker(
+                fn(#[\SensitiveParameter] string $key) => $this->client($key, $installation)->checkApiKey(),
+                [Protocol::class, 'apiKeyFingerprint'],
+            ),
             systemVersion: $installation->systemVersion,
+            sdkVersion: Supertext::SDK_VERSION,
             callbackUrl: $installation->callbackUrl,
             reportUrl: $this->reportUrl,
+            transport: $this->transport !== null ? new PluginHealthTransport($this->transport) : null,
+            now: $this->now,
+        );
+    }
+
+    /** The SDK client for the key check: the configured endpoint, User-Agent "<plugin>/<version>". */
+    private function client(#[\SensitiveParameter] string $apiKey, Installation $installation): Client
+    {
+        return new Client(
+            $apiKey,
+            baseUrl: $installation->apiBaseUrl,
+            userAgent: self::PLUGIN_NAME . '/' . $installation->pluginVersion,
             transport: $this->transport,
-            apiBaseUrl: $installation->apiBaseUrl,
             sleep: $this->sleep,
             now: $this->now,
         );
@@ -122,7 +144,7 @@ final class Reporting
     }
 
     /** The latest stored key check (for the status overview). */
-    public function lastCheck(): ?ApiKeyCheck
+    public function lastCheck(): ?KeyCheck
     {
         try {
             return ReporterState::from($this->storage->get(self::STATE_KEY))->keyCheck;

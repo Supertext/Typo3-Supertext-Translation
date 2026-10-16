@@ -32,7 +32,8 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Service\FieldCollector` | TCA-driven field selection: `input`/`text`, not `l10n_mode=exclude`, not read-only, no numeric/date/email evals, no code editors, no technical reference fields (`sys_file_reference.tablenames`/`fieldname`/`table_local`, link `target`); detects rich text. |
 | `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code`, else an exact Supertext code; see *Language codes*), source (default language's bare language), politeness. Throws the SDK's `unsupported_language` for unmapped languages. |
 | `Api\SupertextClientFactory` | Creates the SDK's `Supertext\Typo3Translation\Sdk\V1\Client` from the extension configuration (key, endpoint, poll interval and timeout, User-Agent `TYPO3-Supertext-Translation/<version>` with the version from `ext_emconf.php`). |
-| `Reporting\Reporting` | Commando Center glue without TYPO3 classes: picks the SDK `InstallationReporter` action (`afterSettingsSaved` when the configuration fingerprint changed, else `onRequest`; `authenticationFailed` after a 401/403), loads and stores the reporter state, answers the ping. Never throws. |
+| `Reporting\Reporting` | Commando Center glue without TYPO3 classes: builds Plugin Health's `InstallationReporter` with the SDK's key check (`Client::checkApiKey()`, `Protocol::apiKeyFingerprint()`, `Supertext::SDK_VERSION`), picks the action (`afterSettingsSaved` when the configuration fingerprint changed, else `onRequest`; `authenticationFailed` after a 401/403), loads and stores the reporter state, answers the ping. Never throws. |
+| `Reporting\PluginHealthTransport` | Plugin Health's `HttpTransport` over the SDK's (`Api\Typo3HttpTransport`), so reports use TYPO3's HTTP client too. No TYPO3 classes; excluded from DI like `Reporting`. |
 | `Reporting\Typo3Reporting` | Feeds `Reporting` with the site URL, TYPO3 version, ping URL and the registry (`Reporting\RegistryStateStorage`); `later()` runs the reporter at the end of the request (after `fastcgi_finish_request()` where available). |
 | `Middleware\PingMiddleware` | Public `GET <root>/supertext/ping` in the frontend stack, before the site resolver (no login, session or page cache). |
 | `Configuration\StatusField` | The *Status* block at the top of the extension configuration (`type=user` in `ext_conf_template.txt`): key check, version reports, language mapping per site. |
@@ -44,12 +45,21 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 
 ## Supertext API protocol
 
-The extension talks to Supertext through the official **Supertext SDK for PHP** ([Supertext-API-SDK-and-Guide](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php), MIT). The SDK implements the protocol below, the HTML packing (one `data-st-id` element per field), the language code rules and the 429 retries; it is tested against the shared test vectors of all Supertext SDKs. The extension only collects fields, maps languages and writes the results back.
+The extension talks to Supertext through the official **Supertext SDK for PHP** ([Supertext-API-SDK-and-Guide](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php), MIT). The SDK implements the protocol below, the HTML packing (one `data-st-id` element per field), the language code rules, the 429 retries and the API key check (`Client::checkApiKey()`; the version reports are Supertext Plugin Health's, see below); it is tested against the shared test vectors of all Supertext SDKs. The extension only collects fields, maps languages and writes the results back.
 
-**Bundled copy:** the extension ships the SDK (0.2.0) in `lib/supertext-sdk/` (sources, `LICENSE`, `COMMIT` with the SDK commit, `VERSION`, a short README), with the namespace changed from `Supertext\Sdk` to `Supertext\Typo3Translation\Sdk` and autoloaded by the extension's `composer.json`. Everything that talks to the API is in the versioned namespace `…\Sdk\V1` (`src/V1/`); the HTTP transport (`…\Sdk\Http`) and `…\Sdk\Supertext::SDK_VERSION` are version-neutral. Sites install only the extension; another package that requires `supertext/supertext-sdk` itself can't clash with it. This stays so after the SDK is on Packagist.
+**Bundled copy:** the extension ships the SDK (0.3.0) in `lib/supertext-sdk/` (sources, `LICENSE`, `COMMIT` with the SDK commit, `VERSION`, a short README), with the namespace changed from `Supertext\Sdk` to `Supertext\Typo3Translation\Sdk` and autoloaded by the extension's `composer.json`. Everything that talks to the API is in the versioned namespace `…\Sdk\V1` (`src/V1/`); the HTTP transport (`…\Sdk\Http`) and `…\Sdk\Supertext::SDK_VERSION` are version-neutral. Sites install only the extension; another package that requires `supertext/supertext-sdk` itself can't clash with it. This stays so after the SDK is on Packagist.
 
 - Update it with `scripts/vendor-sdk.sh [commit-or-branch]` (default `main`; `SDK_DIR=<clone>` uses a local clone), run the tests, and commit with a CHANGELOG entry.
 - Never edit the copy: fix the SDK in its own repository, then re-run the script. PHPStan analyses `Classes/` only.
+
+## Supertext Plugin Health
+
+[Supertext Plugin Health](https://github.com/Supertext/Commando-Center-Supertext-Translation/tree/main/plugin-health) (MIT, no dependencies) is the plugin side of the Supertext Commando Center: version reports, the API key check result they carry and the ping answer. It lives in the Commando Center's repository (`plugin-health/`) and doesn't need the SDK: `Reporting\Reporting` passes it the SDK's key check (`CallableKeyChecker` over `Client::checkApiKey()` and `Protocol::apiKeyFingerprint()`) and `Supertext::SDK_VERSION`. Its `ReporterState` is the JSON the SDK 0.1–0.2 reporter stored, so sites keep their registry state (no new `installed` report).
+
+**Bundled copy:** `lib/supertext-plugin-health/` (sources, `LICENSE`, `COMMIT`, `VERSION`, a short README), namespace changed from `Supertext\PluginHealth` to `Supertext\Typo3Translation\PluginHealth`, autoloaded by the extension's `composer.json` like the SDK; PHPStan analyses `Classes/` only.
+
+- Update it with `scripts/vendor-plugin-health.sh [commit-or-branch]`, e.g. `scripts/vendor-plugin-health.sh plugin-health-v0.1.0` (default `main`; `PLUGIN_HEALTH_DIR=<clone>` uses a local clone of Commando-Center-Supertext-Translation), run the tests, and commit with a CHANGELOG entry.
+- Never edit the copy: fix it in Commando-Center-Supertext-Translation → `plugin-health/`, then re-run the script.
 
 The protocol, shared with the WordPress plugin and every other Supertext CMS plugin:
 
@@ -77,7 +87,7 @@ The mapping lives in the site configuration (`config/sites/<site>/config.yaml`, 
 
 ## Version reports, API key check and ping (Commando Center)
 
-Protocol: Commando-Center-Supertext-Translation → `docs/DEVELOPER.md` → *Report protocol*; implemented by the SDK's `InstallationReporter` (`checkApiKey()`, `reportsEnabled()`, `pingResponse()`, `ReporterState`). The extension only decides when to call it and where to keep the state.
+Protocol: Commando-Center-Supertext-Translation → `docs/DEVELOPER.md` → *Report protocol*; implemented by Supertext Plugin Health's `InstallationReporter` (`reportsEnabled()`, `pingResponse()`, `ReporterState`) with the SDK's `checkApiKey()` as key check (see *Supertext Plugin Health*). The extension only decides when to call it and where to keep the state.
 
 | When | Reporter call | Where |
 | --- | --- | --- |
@@ -87,10 +97,10 @@ Protocol: Commando-Center-Supertext-Translation → `docs/DEVELOPER.md` → *Rep
 
 There is no *Test connection* button and no check command, so `testConnection` and `reportCheck` aren't used.
 
-- **Options:** `plugin.name` = `Typo3-Supertext-Translation` (the GitHub repository), `plugin.version` from `ext_emconf.php` (`Configuration\ExtensionVersion`), `system` = `TYPO3` and `Typo3Version`, runtime PHP (SDK default), `siteUrl` = the base of the first site with an absolute base, else the request's installation URL (`normalizedParams->getSiteUrl()`); without either (CLI with relative site bases) nothing is reported but the key is still checked. `callbackUrl` = `<installation URL>supertext/ping` (the request's installation URL when it is on the site's host, else the site URL's origin).
+- **Options:** `plugin.name` = `Typo3-Supertext-Translation` (the GitHub repository), `plugin.version` from `ext_emconf.php` (`Configuration\ExtensionVersion`), `system` = `TYPO3` and `Typo3Version`, runtime PHP (Plugin Health's default), `sdk_version` = `Supertext::SDK_VERSION`, `siteUrl` = the base of the first site with an absolute base, else the request's installation URL (`normalizedParams->getSiteUrl()`); without either (CLI with relative site bases) nothing is reported but the key is still checked. `callbackUrl` = `<installation URL>supertext/ping` (the request's installation URL when it is on the site's host, else the site URL's origin).
 - **Setting:** `versionReports` in `ext_conf_template.txt`, combined with `SUPERTEXT_VERSION_REPORTS` by `reportsEnabled()`. `SUPERTEXT_REPORT_URL` overrides the center's URL (tests, screenshots).
-- **State:** TYPO3's registry (`sys_registry`, namespace `supertext_translation`): `reporter` (the SDK's `ReporterState` as JSON: last reported versions and key status, last failure, latest key check with the key fingerprint) and `settingsFingerprint` (SHA-256 of the extension configuration). Never the key. Storage errors are caught: reporting never breaks a save or a translation.
-- **Ping:** `Middleware\PingMiddleware` (`Configuration/RequestMiddlewares.php`, frontend stack after `normalized-params-attribute`, before `eid` and `site`) answers `GET <sitePath>supertext/ping` with the SDK's `pingResponse()` status, headers and body (404 while reports are off). Other methods and paths pass through.
+- **State:** TYPO3's registry (`sys_registry`, namespace `supertext_translation`): `reporter` (Plugin Health's `ReporterState` as JSON, the same as the SDK 0.1–0.2 reporter stored: last reported versions and key status, last failure, latest key check with the key fingerprint) and `settingsFingerprint` (SHA-256 of the extension configuration). Never the key. Storage errors are caught: reporting never breaks a save or a translation.
+- **Ping:** `Middleware\PingMiddleware` (`Configuration/RequestMiddlewares.php`, frontend stack after `normalized-params-attribute`, before `eid` and `site`) answers `GET <sitePath>supertext/ping` with Plugin Health's `pingResponse()` status, headers and body (404 while reports are off). Other methods and paths pass through.
 
 ## Local development
 
@@ -114,9 +124,9 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at `Tests/Docs/stand-
 ## Tests
 
 ```bash
-composer install --no-dev        # TYPO3 core (the SDK is bundled in lib/supertext-sdk)
+composer install --no-dev        # TYPO3 core (the SDK and Plugin Health are bundled in lib/)
 php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → Supertext codes (no guessing); translateTexts round trip with a fake transport
-php Tests/ReportingTest.php      # Commando Center glue: which reporter action runs when, stored state, report contents, center failures, setting + env, ping answers and middleware
+php Tests/ReportingTest.php      # Commando Center glue: which reporter action runs when, stored state, report contents, center failures, a state stored by the SDK 0.2 reporter, setting + env, ping answers and middleware
 php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs); every label the code and configuration use exists
 ```
 
