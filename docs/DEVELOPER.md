@@ -36,7 +36,8 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Reporting\PluginHealthTransport` | Plugin Health's `HttpTransport` over the SDK's (`Api\Typo3HttpTransport`), so reports use TYPO3's HTTP client too. No TYPO3 classes; excluded from DI like `Reporting`. |
 | `Reporting\Typo3Reporting` | Feeds `Reporting` with the site URL, TYPO3 version, ping URL and the registry (`Reporting\RegistryStateStorage`); `later()` runs the reporter at the end of the request (after `fastcgi_finish_request()` where available). |
 | `Middleware\PingMiddleware` | Public `GET <root>/supertext/ping` in the frontend stack, before the site resolver (no login, session or page cache). |
-| `Configuration\StatusField` | The *Status* block at the top of the extension configuration (`type=user` in `ext_conf_template.txt`): key check, version reports, language mapping per site. |
+| `Configuration\StatusField` | The *Status* block at the top of the extension configuration (`type=user` in `ext_conf_template.txt`): key check, version reports, language mapping per site. TYPO3 renders that form through the install tool in its failsafe mode (`?__typo3_install`), whose container has only core services: not this extension's nor `SiteFinder`. So `StatusField::services()` takes the services from the container when it has them and otherwise builds them from core services the failsafe container offers (`RequestFactory`, `Registry`, `LogManager`). |
+| `Site\SiteList` | All sites: TYPO3's `SiteFinder` where it is available, otherwise (failsafe mode) the sites read from `config/sites/*/config.yaml`. Used by `Typo3Reporting` (site URL) and the Status block. |
 | `Configuration/SiteConfiguration/Overrides/site_language.php` | The *Supertext* palette in the site language form: `supertext_code` (select of the SDK's `Languages::TARGETS`) and `supertext_politeness`. |
 | `Api\Typo3HttpTransport` | The SDK's `HttpTransport` over TYPO3's `RequestFactory`, so `$GLOBALS['TYPO3_CONF_VARS']['HTTP']` (proxy, TLS, timeouts) applies and ext-curl isn't required. |
 | `Command\LocalizeCommand` | `supertext:localize <page> <language> [--recursive]`. |
@@ -127,6 +128,7 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at `Tests/Docs/stand-
 composer install --no-dev        # TYPO3 core (the SDK and Plugin Health are bundled in lib/)
 php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → Supertext codes (no guessing); translateTexts round trip with a fake transport
 php Tests/ReportingTest.php      # Commando Center glue: which reporter action runs when, stored state, report contents, center failures, a state stored by the SDK 0.2 reporter, setting + env, ping answers and middleware
+php Tests/SiteListTest.php       # the sites from config.yaml, as the Status block reads them in the install tool's failsafe mode
 php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs); every label the code and configuration use exists
 ```
 

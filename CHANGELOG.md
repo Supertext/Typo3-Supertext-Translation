@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed: the *Status* block in the extension configuration (Settings → Extension Configuration) showed only *The Supertext status is not available here*. TYPO3 builds that form in the install tool's failsafe mode, where the extension's services aren't available; the block now builds what it needs itself and reads the sites from their configuration files.
 - Changed: version reports, the API key check result and the reachability ping now use Supertext Plugin Health 0.1.0 (bundled in `lib/supertext-plugin-health`); Supertext SDK updated to 0.3.0. No change for sites: settings and stored state stay as they are.
 - Added: support for PHP 8.5 (now tested in CI next to 8.2, 8.3 and 8.4).
 - Changed: **no more guessed language codes.** Supertext accepts only its own codes (regional for German, English, French, Italian and Portuguese, e.g. `de-CH`; bare for most others, e.g. `es`, `nl`, `sl`; `zh-Hans`, `sr-Latn`). A site language is sent with its `supertext_code`, else its locale if that is a Supertext code; otherwise the translation into it stops with *The language … has no Supertext language yet* and nothing is sent. Locales without region no longer get a default region (`de` → `de-DE`, `es` → `es-ES`, …; several of those were rejected by Supertext). After updating, check the new Status block and map the languages it marks as *Not mapped*.
