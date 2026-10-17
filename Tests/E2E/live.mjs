@@ -135,9 +135,12 @@ async function languageMenuItem(title) {
 	// languages the page already has.
 	const handle = await f.evaluateHandle((wanted) => {
 		const own = (el, text) => el.textContent.trim() === text && ![...el.children].some((c) => c.textContent.trim() === text);
+		const heading = [...document.querySelectorAll('*')].find((el) => own(el, 'Create new translation') && el.getClientRects().length);
+		if (!heading) return null;
+		const menu = heading.closest('.dropdown-menu, [role="menu"], ul') ?? heading.parentElement.parentElement;
 		let below = false;
-		for (const el of document.querySelectorAll('*')) {
-			if (own(el, 'Create new translation')) below = true;
+		for (const el of menu.querySelectorAll('*')) {
+			if (el === heading) below = true;
 			else if (below && own(el, wanted) && el.getClientRects().length) return el.closest('a, button') ?? el;
 		}
 		return null;
@@ -173,12 +176,17 @@ async function translatePage(p, lang) {
 	try {
 		await item.click();
 		await page.getByText(/Step \d of \d/).first().waitFor();
-		const next = (label = 'Next') => page.locator('.wizard-actions button').filter({ hasText: label }).last().click();
-		await page.waitForTimeout(800);
-		await next(); // content selection (all selected by default)
-		await page.waitForTimeout(800);
-		await next(); // mode: Translate (default)
-		await page.waitForTimeout(800);
+		const button = (label) => page.locator('.wizard-actions button').filter({ hasText: label }).last();
+		const next = (label = 'Next') => button(label).click();
+		// The steps depend on the page: content selection (all selected by default), source
+		// language (when the page has several), mode (Translate is the default), handler,
+		// confirmation. Accept the defaults until the confirmation's "Localize".
+		for (let step = 0; ; step++) {
+			await page.waitForTimeout(1000);
+			if (await button('Localize').isVisible()) break;
+			if (step > 10) throw new Error('no "Localize" button after 10 steps');
+			await next();
+		}
 		await next('Localize'); // Supertext translates in this step
 		await page.getByText(/Localization completed/).waitFor({ timeout: 900_000 });
 		await next('Finish');
