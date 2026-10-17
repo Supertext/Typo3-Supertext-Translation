@@ -132,7 +132,26 @@ php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (key
 
 The tests use fake transports: they never call the live Supertext API or the Commando Center.
 
-CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3, 8.4 and 8.5, installs the dependencies, runs the three tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3, 8.4 and 8.5, installs the dependencies, runs the three tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*). `.github/workflows/checks.yml` and `links.yml` lint the workflows and check the links. `.github/workflows/e2e.yml` runs the end-to-end test against the real Supertext API and regenerates the docs screenshots (see *End-to-end tests*).
+
+## End-to-end tests
+
+The tests above use fakes. `.github/workflows/e2e.yml` also tests against the **real Supertext API**, so changes on Supertext's side (language codes, regional variants, formatting, rate limits) show up. It runs on every push to `main` that touches the extension, the demo or the tests, on pull requests that change the E2E test or workflow, every Monday (05:57 UTC), and by hand (*Actions → E2E → Run workflow*). It builds the demo image once (Docker layer cache in GitHub Actions) and starts it twice, each a fresh install (Camino content, SQLite inside the container) with demo accounts made up for the run (`DEMO_ADMIN_*`, `DEMO_EDITOR_*`). Both containers get `Tests/E2E/additional-ci.php` instead of `demo/additional.php`: the demo's reverse-proxy settings (Railway's TLS proxy) would make TYPO3 treat plain `http://127.0.0.1` as HTTPS.
+
+1. **Real API** (repository or organization secret `SUPERTEXT_API_KEY`; without it these steps are skipped with a warning). Version reports are off (`SUPERTEXT_VERSION_REPORTS=0`), so CI runs don't appear in the Commando Center.
+   - `Tests/E2E/features.mjs` asks the live `GET features` (cost-free, no extension or SDK code) whether every pair the demo translates (`en` → `de-CH`, `fr-CH`, as the extension sends them) is offered; a missing pair fails the run. Whether the extension's own language list matches the API is the SDK's job (its own tests).
+   - `Tests/E2E/live.mjs` (Playwright): the editor account translates every page of the site into every target language through the Page module's language menu and the **Localize** wizard (Translate mode), exactly as the user guide describes; no Supertext warning may appear and the green *Supertext translated …* message must. Then the database is read through `docker exec` (PHP, as `www-data`) and checked: every page, content element and Camino list item has exactly one translation per language; new pages and content elements are hidden for review; every text field is filled and at least 80 % of them changed (single words may stay the same); technical fields (`CType`, `colPos`, list items' `fieldname` and `link`, file references) are unchanged; no `data-st-id`/placeholder or *[Translate to …]* prefix is left; bold, italics, lists, paragraphs and links are kept (counted per field); the text is in the target language (common words of each language counted) and de-CH has no "ß". The extension has no retranslate action (it never overwrites an existing translation), so instead of translating twice it checks that the Page module no longer offers a new translation of a translated page. Each run translates the Camino site once into two languages.
+2. **Stand-in API**: the docs screenshots (see *Docs screenshots*), so the images don't change with each machine translation. If `docs/images/` changed, a second job pushes the branch `automation/docs-screenshots` and opens (or updates) the pull request "Docs: regenerate screenshots" (only for runs on `main`). This needs *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*.
+
+If a run fails, the artifact `e2e-debug` has the result pages (`artifacts/`), the container logs, TYPO3's logs and the stand-in log. Locally:
+
+```bash
+cd Tests/E2E && npm install && npx playwright install chromium
+# a fresh demo container named demo-live on port 8081 with a real SUPERTEXT_API_KEY,
+# DEMO_EDITOR_* set and Tests/E2E/additional-ci.php mounted as config/system/additional.php
+SUPERTEXT_API_KEY=… E2E_SOURCE=en E2E_TARGETS=de-CH,fr-CH node features.mjs
+TYPO3_URL=http://127.0.0.1:8081 E2E_CONTAINER=demo-live EDITOR_EMAIL=… EDITOR_PASSWORD=… npm run live
+```
 
 ## Demo (Railway)
 
@@ -198,7 +217,7 @@ npm run stand-in &
 BASE_URL=http://127.0.0.1:8090 DEMO_ADMIN_EMAIL=... DEMO_ADMIN_PASSWORD=... npm run screenshots
 ```
 
-Start from a database where the FAQ page has no German translation yet. Locally, drop `demo/additional.php`: its reverse-proxy settings make TYPO3 redirect to HTTPS.
+Start from a database where the FAQ page has no German translation yet. In CI the E2E workflow runs this script against a fresh demo container and the stand-in (see *End-to-end tests*). The key check's time in the extension configuration is hidden before the screenshot, so the image only changes when the screen does. Locally, drop `demo/additional.php`: its reverse-proxy settings make TYPO3 redirect to HTTPS.
 
 ## Code quality and security checks
 
