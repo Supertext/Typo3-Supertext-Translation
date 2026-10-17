@@ -75,7 +75,7 @@ Two messages are about the language settings, also for your administrator:
 
 | Message | What it means |
 | --- | --- |
-| *Deutsch: The language de has no Supertext language yet. Ask your administrator to map it …* | Supertext only accepts its own language codes, and nobody has chosen one for this site language yet (for example whether `de` means German for Germany or for Switzerland). Nothing was sent to Supertext. Once your administrator has chosen the Supertext language, delete the untranslated copies and translate again. |
+| *Deutsch (Liechtenstein): The language de_LI has no Supertext language yet. Ask your administrator to choose one …* | Supertext only accepts its own language codes, this site language's locale has no obvious one (for example `de_LI` or `en_IE`), and nobody has chosen one for it yet. Nothing was sent to Supertext. Once your administrator has chosen the Supertext language, delete the untranslated copies and translate again. |
 | *Supertext offers no formal or informal tone for this language …* | The language is set to formal or informal, but Supertext has no such choice for it (for example English). Your administrator sets its tone to *Default*. |
 
 ## Tips

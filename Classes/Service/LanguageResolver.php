@@ -14,18 +14,20 @@ use TYPO3\CMS\Core\Site\SiteFinder;
 
 /**
  * Maps TYPO3 site languages to Supertext language codes, with the Supertext SDK's
- * rules (no guessing, the same in every Supertext plugin):
+ * rules (the same in every Supertext plugin, Languages::target()):
  *
- * - The site language's `supertext_code` wins (the administrator's mapping, sent as it is).
- * - Otherwise its locale without encoding (de_CH.UTF-8 => de_CH) is used if it equals a
- *   Supertext code apart from case and _/- (de_CH => de-CH, es => es, nl_NL => nothing:
- *   Supertext wants bare "nl").
- * - Anything else is SupertextException unsupported_language: nothing is sent, and the
- *   editor is asked to have the language mapped.
+ * - The site language's `supertext_code` wins (the administrator's choice in the select,
+ *   sent as it is).
+ * - Otherwise its locale without encoding (de_CH.UTF-8 => de_CH) if it equals a Supertext
+ *   code apart from case and _/- (de_CH => de-CH, es => es).
+ * - Otherwise the SDK's default where one is obvious (de => de-DE, en => en-US, nl_NL => nl,
+ *   es_ES => es, zh_CN => zh-Hans, zh_TW => zh-Hant, sr => sr-Latn).
+ * - Anything else (en_IE, de_LI, gsw, sr_RS, ...) is SupertextException unsupported_language:
+ *   nothing is sent, and the editor is asked to have the language mapped.
  *
  * The source is the default language's code reduced to what Supertext accepts as a source
- * (en_US => en). Set the codes per language in Site Management > Sites (tab Supertext) or
- * in config/sites/<site>/config.yaml:
+ * (en_US => en). Set the codes per language in Sites > Setup > edit the site > Languages >
+ * (language) > Supertext, or in config/sites/<site>/config.yaml:
  *
  *   languages:
  *     - languageId: 1
@@ -77,7 +79,8 @@ final class LanguageResolver
     }
 
     /**
-     * The Supertext target for a locale: the override if set, else an exact Supertext code.
+     * The Supertext target for a locale: the override if set, else an exact Supertext code,
+     * else the SDK's default.
      *
      * @throws SupertextException unsupported_language (targetLang = the locale)
      */
@@ -98,7 +101,44 @@ final class LanguageResolver
         return Languages::source($locale, $override !== '' ? [$locale => $override] : []);
     }
 
-    /** The target code, or null when the language isn't mapped (for the status overview). */
+    /** True when a language without supertext_code is sent with the SDK's default, not an exact match of its locale. */
+    public static function usesDefault(string $locale, string $override = ''): bool
+    {
+        return $override === '' && Languages::matchTarget($locale) === null && Languages::defaultTarget($locale) !== null;
+    }
+
+    /**
+     * The supertext_code an upgrade stores for a value of an older version, with the tone, or
+     * null when nothing changes. Values of 0.1 were free text: case and _/- are normalized
+     * ("de_ch" => "de-CH"), a bare or regional language gets the code 0.1 sent ("de" => "de-DE",
+     * "es_ES" => "es"), and a TYPO3 variant becomes the tone ("de_DE_formal" => de-DE + more)
+     * unless one is set. A value the list doesn't know stays (it is sent as it is).
+     *
+     * @return array{code: string, politeness: string}|null
+     */
+    public static function migratedCode(string $code, string $politeness = ''): ?array
+    {
+        $code = trim($code);
+        if ($code === '' || Languages::matchTarget($code) === $code) {
+            return null;
+        }
+        $tone = '';
+        if (preg_match('/^(.+?)[_-](formal|informal)$/i', $code, $m) === 1) {
+            $code = $m[1];
+            $tone = strtolower($m[2]) === 'formal' ? Politeness::MORE : Politeness::LESS;
+        }
+        $migrated = Languages::suggestTarget(self::stripEncoding($code));
+        if ($migrated === null) {
+            return null;
+        }
+        $politeness = in_array($politeness, [Politeness::MORE, Politeness::LESS], true) ? $politeness : '';
+        if ($politeness === '' && $tone !== '' && Languages::supportsPoliteness($migrated) === true) {
+            $politeness = $tone;
+        }
+        return ['code' => $migrated, 'politeness' => $politeness];
+    }
+
+    /** The target code, or null when the language has neither a mapping nor a default (for the status overview). */
     public static function targetCodeOrNull(string $locale, string $override = ''): ?string
     {
         try {
@@ -108,7 +148,7 @@ final class LanguageResolver
         }
     }
 
-    /** The source code, or null when the default language isn't mapped (for the status overview). */
+    /** The source code, or null when the default language has no Supertext source (for the status overview). */
     public static function sourceCodeOrNull(string $locale, string $override = ''): ?string
     {
         try {

@@ -93,5 +93,15 @@ await frame().getByRole('tab', { name: /Languages/i }).click();
 await page.waitForTimeout(1500);
 await shot('site-languages', { x: 240, y: 60, width: 1160, height: 520 });
 
+// The Supertext palette of a site language: the Supertext language select ("Default (de-CH)") and the tone.
+await frame().getByText('Deutsch (Schweiz)').first().click();
+const codeSelect = frame().locator('select[name*="supertext_code"]').first();
+await codeSelect.waitFor();
+await codeSelect.scrollIntoViewIfNeeded();
+await page.waitForTimeout(800);
+const heading = await frame().getByText('Supertext', { exact: true }).last().boundingBox();
+const selectBox = await codeSelect.boundingBox();
+await shot('site-language-supertext', pad({ x: heading.x, y: heading.y, width: 1078, height: selectBox.y + selectBox.height - heading.y }, 12));
+
 await browser.close();
 console.log(`Screenshots written to ${OUT}`);

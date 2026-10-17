@@ -71,15 +71,27 @@ The extension's own texts (the settings in the extension configuration and the s
 
 ## 4. Configure the site languages
 
-Every site language needs a **Supertext language**. Supertext accepts exactly its own codes (table below), and the extension never guesses one: whether a site's `de` means Germany or Switzerland is your decision.
+Every site language is sent to Supertext with a **Supertext language**, which you choose from a list: *Sites → Setup → edit the site → Languages → (language) → Supertext → Supertext language* (TYPO3 13: *Site Management → Sites*). The list offers every Supertext language with its name (in your backend language) and code. One choice serves both directions: for the default language it is the language Supertext translates **from**.
 
-- **Automatic:** a site language whose locale (without encoding) already is a Supertext code is used as it is, apart from case and `_`/`-`: `de_CH.UTF-8` → `de-CH`, `fr_FR` → `fr-FR`, `es` → `es`, `nl` → `nl`.
-- **Mapped:** for any other locale, choose the Supertext language in the site configuration: *Sites → Setup → edit the site → Languages → (language) → Supertext → Supertext language* (TYPO3 13: *Site Management → Sites*). The list offers every Supertext language with its name and code. Or set `supertext_code` in `config/sites/<site>/config.yaml`. Typical cases: `de` → `de-DE` or `de-CH`, `en` → `en-US` or `en-GB`, `es_ES` → `es`, `nl_NL` → `nl`, `zh_CN` → `zh-Hans`, `nb_NO` → `nb`.
-- **Not mapped:** a translation into a language that has neither stops before anything is sent to Supertext, with the message *The language … has no Supertext language yet* (the records are still localized as copies). The **Status** block in the extension configuration lists every site language with the Supertext code it is sent as and marks the ones that aren't mapped.
+- **Default:** with nothing chosen, the first entry of the list shows what the language is sent as, e.g. *Default (de-DE)*: the locale itself when it is a Supertext code (`de_CH.UTF-8` → `de-CH`, `es` → `es`), else the usual Supertext language for it (table below). Keep it, or choose another one (e.g. `de-CH` for a `de` locale used in Switzerland).
+- **— choose —:** a locale without a default (e.g. `en_IE`, `de_LI`, `fr_BE`, `gsw`, `sr_RS`) shows *— choose —*. Until you choose its Supertext language, a translation into it stops before anything is sent to Supertext, with the message *The language … has no Supertext language yet* (the records are still localized as copies).
+- The **Status** block in the extension configuration lists every site language with the Supertext code it is sent as (*default* when it is the default) and marks the languages that still need one.
 
-The default language is the **source**. It is sent as a bare language: its `supertext_code` or locale reduced to the language (`en_US.UTF-8` → `en`, `de-CH` → `de`). One `supertext_code` serves both directions, so a language that is sometimes the default and sometimes a target needs only one.
+![The Supertext palette of the site language Deutsch (Schweiz): Supertext language set to Default (de-CH), Supertext tone set to Formal](images/site-language-supertext.png)
 
-Earlier versions of this extension gave locales without region a default region (`de` → `de-DE`, `es` → `es-ES`). Supertext rejects several of those (`es-ES`, `sl-SI`, `zh-CN`), so that is gone: after updating, check the **Status** block and map the languages it marks as *Not mapped*.
+Defaults, applied only where nothing is chosen and the locale isn't a Supertext code itself:
+
+| Locale | Sent as |
+| --- | --- |
+| `de`, `en`, `fr`, `it`, `pt` (no region) | `de-DE`, `en-US`, `fr-FR`, `it-IT`, `pt-PT` |
+| `zh`, `zh_CN`, `zh_SG` / `zh_TW`, `zh_HK`, `zh_MO` | `zh-Hans` / `zh-Hant` |
+| `sr`, `sr_Latn_RS` / `sr_Cyrl_RS` | `sr-Latn` / `sr-Cyrl` |
+| A region of a language Supertext offers without region (`es_ES`, `es_MX`, `nl_NL`, `nb_NO`, `sl_SI`, …) | the language (`es`, `nl`, `nb`, `sl`, …) |
+| Anything else that isn't a Supertext code (`en_IE`, `de_LI`, `fr_BE`, `gsw`, `sr_RS`, `no`) | nothing: choose it |
+
+The default language is the **source**. It is sent as a bare language: its Supertext language or locale reduced to the language (`en_US.UTF-8` → `en`, `de-CH` → `de`).
+
+**Tone** (*Supertext tone*, same palette): formal or informal address, offered only for the languages with ✓ in the *Tone* column below; the field appears only for those (after saving the language choice). Saving the form clears a tone the chosen language doesn't offer. A tone set in the YAML for such a language makes Supertext refuse the translation (*Supertext offers no formal or informal tone for this language*); the Status block marks it.
 
 ![Site configuration, Languages tab: English (en-US), Deutsch (Schweiz) (de-CH) and Français (Suisse) (fr-CH)](images/site-languages.png)
 
@@ -90,13 +102,13 @@ languages:
   -
     languageId: 1
     locale: de_CH.UTF-8
-    supertext_code: de-CH          # Supertext language (sent as it is); empty = automatic
+    supertext_code: de-CH          # Supertext language (sent as it is); empty = the default for the locale
     supertext_politeness: more     # more = formal (Sie/vous/Lei), less = informal (du/tu); empty = default
 ```
 
-A `supertext_code` that isn't in the list below is sent as it is, so a language Supertext adds later works before the extension knows it (the form's list only offers the known ones; set it in the YAML).
+A `supertext_code` that isn't in the list below is sent as it is, so a language Supertext adds later works before the extension knows it: set it in the YAML; the form then shows it as *… (not in the Supertext list, sent as it is)* and keeps it. A code typed into the YAML in another spelling (`de_ch`) is shown and saved as the list's code (`de-CH`); saving the form drops a new value that isn't in the list (the language then uses its default).
 
-**Tone:** formal or informal address exists only for some languages (column *Tone* below). For the others, leave *Supertext tone* at *Default*; otherwise Supertext refuses the translation (*Supertext offers no formal or informal tone for this language*) and the Status block marks the language.
+**From an older version:** run the upgrade wizard *Supertext: language codes of the site languages* (*Admin Tools → Upgrade → Upgrade Wizard*, or `vendor/bin/typo3 upgrade:run supertextTranslation_languageCodes`). It rewrites `supertext_code` values of 0.1 (free text) to the list's codes, keeping what they were sent as: `de_ch` → `de-CH`, `de` → `de-DE`, `es_ES` → `es`, `de_DE_formal` → `de-DE` with formal tone (unless a tone is set). Unknown codes stay as they are. Values already in the list are untouched, so the wizard only appears when there is something to do.
 
 ### Supertext languages
 
@@ -173,7 +185,7 @@ Per site language (site configuration, see [step 4](#4-configure-the-site-langua
 
 | Key | Default | Purpose |
 | --- | --- | --- |
-| `supertext_code` | automatic | Supertext language of this site language (the default language: its source). Empty = the locale, if it is a Supertext code |
+| `supertext_code` | default | Supertext language of this site language (the default language: its source), chosen from the list. Empty = the locale if it is a Supertext code, else its default (see the table in [section 4](#4-configure-the-site-languages)); locales without either need one |
 | `supertext_politeness` | default | `more` (formal) or `less` (informal), only for languages that offer it |
 
 Environment variables:
@@ -208,6 +220,7 @@ Environment variables:
 ```bash
 composer update supertext/typo3-translation
 vendor/bin/typo3 extension:setup -e supertext_translation
+vendor/bin/typo3 upgrade:run supertextTranslation_languageCodes   # only listed when old language codes need it
 vendor/bin/typo3 cache:flush
 ```
 
@@ -228,7 +241,7 @@ Existing translations stay untouched; only automatic translation stops.
 | *No Supertext API key configured* | Set the key (step 3); generate one at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api). Records were still localized as plain copies. |
 | *Authentication failed* | The key is wrong or revoked. Check it, or generate a new one at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (Admin role required). |
 | *has no site language N* | The page isn't inside a site, or the language isn't defined in that site's configuration. |
-| *The language … has no Supertext language yet* | The site language's locale isn't a Supertext code and no Supertext language is chosen for it. Choose one (step 4); nothing was sent to Supertext. |
+| *The language … has no Supertext language yet* | The site language has no Supertext language chosen, and its locale is neither a Supertext code nor has a default (the select shows *— choose —*). Choose one (step 4); nothing was sent to Supertext. |
 | *Supertext offers no formal or informal tone for this language* | `supertext_politeness` is set for a language without formal/informal (e.g. `en-US`, `rm`, `sq`, Serbian, Swiss German). Set *Supertext tone* to *Default*. |
 | *Supertext rejected the API key* (Status block) | The key is wrong, incomplete or revoked. Copy the whole key again, or generate a new one at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (Admin role required). No account yet? [Create one at supertext.com](https://www.supertext.com/person/en/account/signin). |
 | *The API key couldn't be checked* (Status block) | Supertext couldn't be reached, or answered with an error (HTTP status in brackets). The settings are saved; open the configuration again later. |

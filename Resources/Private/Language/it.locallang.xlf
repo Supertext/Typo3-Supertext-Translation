@@ -116,8 +116,8 @@
 				<target>Inviare le informazioni sulla versione a Supertext: invia a Supertext l'URL del sito e le versioni di questa estensione, di TYPO3 e dell'ambiente di esecuzione quando salva queste impostazioni e dopo un aggiornamento. In questo modo l'assistenza Supertext vede quale versione utilizza. Non vengono trasmessi contenuti, chiavi API né dati personali. La variabile d'ambiente SUPERTEXT_VERSION_REPORTS=0 lo disattiva e ha la precedenza.</target>
 			</trans-unit>
 			<trans-unit id="error.unsupportedLanguage" approved="yes">
-				<source>The language %s has no Supertext language yet. Ask your administrator to map it (field Supertext language of the site language in the site configuration, or supertext_code, e.g. de-CH).</source>
-				<target>La lingua %s non è ancora associata a una lingua Supertext. Chieda al Suo amministratore di associarla (campo Lingua Supertext della lingua del sito nella configurazione del sito, oppure supertext_code, ad es. de-CH).</target>
+				<source>The language %s has no Supertext language yet. Ask your administrator to choose one in the site configuration (Languages → the language → Supertext → Supertext language).</source>
+				<target>La lingua %s non ha ancora una lingua Supertext. Chieda al Suo amministratore di sceglierne una nella configurazione del sito (Lingue → la lingua → Supertext → Lingua Supertext).</target>
 			</trans-unit>
 			<trans-unit id="error.unsupportedFeature" approved="yes">
 				<source>Supertext offers no formal or informal tone for this language. Set the Supertext tone of this site language to Default (supertext_politeness).</source>
@@ -188,8 +188,8 @@
 				<target>Lingue</target>
 			</trans-unit>
 			<trans-unit id="status.languagesHelp" approved="yes">
-				<source>Every site language needs a Supertext language. Choose it in the site configuration (Languages, field Supertext language) or set supertext_code in config/sites/&lt;site&gt;/config.yaml.</source>
-				<target>Ogni lingua del sito ha bisogno di una lingua Supertext. La scelga nella configurazione del sito (Lingue, campo Lingua Supertext) oppure imposti supertext_code in config/sites/&lt;site&gt;/config.yaml.</target>
+				<source>Every site language is sent with the Supertext language chosen in the site configuration (Languages → the language → Supertext → Supertext language), else with the default for its locale (e.g. de → de-DE). Choose one for the languages marked below, or set supertext_code in config/sites/&lt;site&gt;/config.yaml.</source>
+				<target>Ogni lingua del sito viene inviata con la lingua Supertext scelta nella configurazione del sito (Lingue → la lingua → Supertext → Lingua Supertext), altrimenti con il valore predefinito della sua locale (ad es. de → de-DE). Ne scelga una per le lingue segnalate qui sotto, oppure imposti supertext_code in config/sites/&lt;site&gt;/config.yaml.</target>
 			</trans-unit>
 			<trans-unit id="status.noSites" approved="yes">
 				<source>No sites are configured yet.</source>
@@ -223,6 +223,10 @@
 				<source>Not mapped: choose its Supertext language</source>
 				<target>Non associata: scelga la lingua Supertext</target>
 			</trans-unit>
+			<trans-unit id="status.default" approved="yes">
+				<source>default</source>
+				<target>predefinita</target>
+			</trans-unit>
 			<trans-unit id="status.tone.default" approved="yes">
 				<source>Default</source>
 				<target>Predefinito</target>
@@ -248,12 +252,20 @@
 				<target>Lingua Supertext</target>
 			</trans-unit>
 			<trans-unit id="siteLanguage.code.description" approved="yes">
-				<source>The language Supertext translates into (for the default language: from). Automatic uses the locale when it is a Supertext language (e.g. de-CH, es); otherwise translations into this language stop with a message until you choose one.</source>
-				<target>La lingua in cui Supertext traduce (per la lingua predefinita: da cui traduce). Automatico usa la locale se è una lingua Supertext (ad es. de-CH, es); altrimenti le traduzioni in questa lingua si interrompono con un messaggio finché non ne sceglie una.</target>
+				<source>The language Supertext translates into (for the default language: from). Default uses the code shown for the locale: its exact Supertext code, or the usual one (de → de-DE, nl_NL → nl, zh_TW → zh-Hant). Locales without one show “— choose —”: translations into such a language stop with a message until you choose its Supertext language.</source>
+				<target>La lingua in cui Supertext traduce (per la lingua predefinita: da cui traduce). Predefinita usa il codice indicato per la locale: il suo codice Supertext esatto o quello usuale (de → de-DE, nl_NL → nl, zh_TW → zh-Hant). Le locale senza un codice mostrano «— scegliere —»: le traduzioni in una tale lingua si interrompono con un messaggio finché non sceglie la sua lingua Supertext.</target>
 			</trans-unit>
-			<trans-unit id="siteLanguage.code.automatic" approved="yes">
-				<source>Automatic (the locale, if it is a Supertext language)</source>
-				<target>Automatico (la locale, se è una lingua Supertext)</target>
+			<trans-unit id="siteLanguage.code.default" approved="yes">
+				<source>Default (%s)</source>
+				<target>Predefinita (%s)</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.code.choose" approved="yes">
+				<source>— choose —</source>
+				<target>— scegliere —</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.code.custom" approved="yes">
+				<source>%s (not in the Supertext list, sent as it is)</source>
+				<target>%s (non nella lista Supertext, inviato così com’è)</target>
 			</trans-unit>
 			<trans-unit id="siteLanguage.politeness" approved="yes">
 				<source>Supertext tone</source>
