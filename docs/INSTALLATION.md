@@ -217,10 +217,13 @@ Environment variables:
 
 ## Translation files (export and import)
 
-`supertext:export` and `supertext:import` (see the [user guide](USER_GUIDE.md#translate-with-a-file-xliff-or-html)) export a page as an XLIFF 1.2 or HTML file and import the translated file. There is nothing to configure, and no API key is needed for them (nothing is sent to Supertext).
+The backend module **Content → Supertext** (*Web → Supertext* in TYPO3 13) and the commands `supertext:export` / `supertext:import` (see the [user guide](USER_GUIDE.md#translate-with-a-file-xliff-or-html)) export a page as an XLIFF 1.2 or HTML file and import the translated file. There is nothing to configure, and no API key is needed for them (nothing is sent to Supertext).
 
-- **Permissions:** they run on the command line as TYPO3's CLI user (`_cli_`, an administrator), so whoever may run `vendor/bin/typo3` on the server may export and import. The import writes through the DataHandler like a translation, with history and reference index.
-- **File size:** files larger than 10 MB are refused before they are read. Imported files are parsed in memory and not stored; the SDK refuses files that aren't well-formed XLIFF or HTML (no DTDs or entities) and takes the formatting only from the current original text.
+![The Supertext module: Export for translation with the site's languages and the file format](images/module-export.png)
+
+- **Access to the module:** administrators have it. For editors, tick *Content > Supertext* (module key `supertext_translation_files`) under *Modules* in their backend user group (*Administration → Permissions → Backend user groups*, *Access Lists* tab). Without it they can still translate with Supertext AI through TYPO3's own *Localize* step.
+- **Permissions:** the module works as the logged-in user: export only offers pages the user may see and site languages the user may edit, and the import writes through the DataHandler as that user, so page permissions, allowed languages and table/field rights apply (records the user may not edit are reported in the import result). The commands run as TYPO3's CLI user (`_cli_`, an administrator), so whoever may run `vendor/bin/typo3` on the server may export and import everything. Both write like a translation, with history and reference index.
+- **File size:** files larger than 10 MB are refused before they are read. Uploads in the module also need PHP's `upload_max_filesize` and `post_max_size` to allow them (the demo uses 32M); a larger upload than PHP allows shows *The file is too large (at most 10 MB).* Imported files are parsed in memory and not stored; the SDK refuses files that aren't well-formed XLIFF or HTML (no DTDs or entities) and takes the formatting only from the current original text.
 - New translations created by an import are hidden for review, like every new translation; existing translations are overwritten with the file's texts.
 
 ## Updating

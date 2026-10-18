@@ -43,6 +43,7 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Upgrades\SupertextCodeUpgradeWizard` | Upgrade wizard `supertextTranslation_languageCodes` (Install namespace: TYPO3 13, and its alias in 14): rewrites 0.1 free-text `supertext_code` values with `LanguageResolver::migratedCode()` through `SiteWriter`. Only listed when something changes. |
 | `Api\Typo3HttpTransport` | The SDK's `HttpTransport` over TYPO3's `RequestFactory`, so `$GLOBALS['TYPO3_CONF_VARS']['HTTP']` (proxy, TLS, timeouts) applies and ext-curl isn't required. |
 | `Command\LocalizeCommand` | `supertext:localize <page> <language> [--recursive]`. |
+| `Controller\TranslationFilesController` | Backend module *Supertext* (`Configuration/Backend/Modules.php`: `supertext_translation_files`, parent `content` on TYPO3 14 and `web` on 13, page tree; template `Resources/Private/Templates/TranslationFiles/Index.html`, icon in `Configuration/Icons.php`). Export of the selected page (only site languages from `Site::getAvailableLanguages()` for the user) as a download; import of an uploaded file, read in memory, never stored, with the result per job. See *Translation files*. |
 | `Command\ExportCommand`, `Command\ImportCommand` | `supertext:export <page> <language…> [--format=xliff\|html] [--output=<file>]` and `supertext:import <file> [--include-changed]`, see *Translation files*. |
 | `Files\TranslationFileGlue` | Export/import with the SDK's `TranslationFiles`, without TYPO3 classes (tested by `Tests/TranslationFilesTest.php`): builds the jobs (reference, languages via `LanguageResolver`), checks imported jobs, counts the results and hands the texts to the store. |
 | `Files\Typo3TranslationFileStore` | The TYPO3 side (`Files\TranslationFileStore`): collects a page's segments with `FieldCollector`, finds the site language, localizes missing records and writes through `TranslationService::writeBack()`. |
@@ -95,7 +96,12 @@ The mapping lives in the site configuration (`config/sites/<site>/config.yaml`, 
 
 *Export for translation* and *Import translation* with the SDK's `TranslationFiles` (SDK 0.5.0, `Supertext\Typo3Translation\Sdk\Files`; integration guide → *Translation files: XLIFF and HTML*). Nothing here calls the API.
 
-**Where:** CLI commands next to `supertext:localize`. The extension has no backend screen of its own: API translation hooks into TYPO3's own *Localize* step, which has no place for a file download or upload, and the extension configuration is the install tool's (not reachable for editors, and on TYPO3 14 without the extension's services). A backend module for editors is on the roadmap; `Files\TranslationFileGlue` has no TYPO3 classes, so it can serve one unchanged.
+**Where:** the backend module *Content → Supertext* (`Controller\TranslationFilesController`) for editors, and the CLI commands next to `supertext:localize`; both use `Files\TranslationFileGlue` unchanged. API translation hooks into TYPO3's own *Localize* step, which has no place for a file download or upload, hence the module. Module details:
+
+- **Route and CSRF:** the forms post to the module URL from `UriBuilder::buildUriFromRoute()`, which carries TYPO3's route token (checked by the backend `RouteDispatcher` for every non-public route), so no separate form token is needed.
+- **Export:** page from the page tree (`id`), checked with `BackendUtility::readPageAccess()` and default language only; languages limited to the site's languages the user may edit; validation (*Choose at least one language.*, *An HTML file holds exactly one language…*) before the glue runs. The response is the file as an attachment (`Content-Disposition`, `X-Content-Type-Options: nosniff`, `Cache-Control: no-store`).
+- **Import:** the PSR-7 upload; `UPLOAD_ERR_INI_SIZE`/`FORM_SIZE`, a size over 10 MB, and a POST whose body PHP dropped (over `post_max_size`: no fields, no files, `CONTENT_LENGTH` > 0) all show *too large* without reading the file. Results per job: `Labels::importSummary()`; red when the job failed or DataHandler reported errors, green when something was imported, blue otherwise.
+- **Permissions:** `Typo3TranslationFileStore::item()` returns *not found* for pages a non-admin user may not see, and `language()` *no language* for languages the user may not edit (`checkLanguageAccess()`); the CLI user is an admin. Writes go through DataHandler as the user.
 
 **Item and segments:** an item is a page in the default language with its content elements (`pid` = the page, `sys_language_uid` = 0, not deleted, hidden ones too) and the file references of both, the records localizing the page in the Page module sends to Supertext. Fields come from `FieldCollector` (the same as API translation); segment keys are `<table>:<uid>:<field>` of the default-language records (`pages:12:title`, `tt_content:7:bodytext`, `sys_file_reference:3:alternative`).
 
@@ -217,6 +223,8 @@ npm run stand-in &
 BASE_URL=http://127.0.0.1:8090 DEMO_ADMIN_EMAIL=... DEMO_ADMIN_PASSWORD=... npm run screenshots
 ```
 
+The module shots (`module-export`, `module-import-result`) export the FAQ page, fill the XLIFF with the German of `sample-de.json` (what a translator would deliver) and import it.
+
 Start from a database where the FAQ page has no German translation yet. Locally, drop `demo/additional.php`: its reverse-proxy settings make TYPO3 redirect to HTTPS.
 
 ## Code quality and security checks
@@ -249,9 +257,8 @@ Releases are published by `.github/workflows/release.yml` when the version is of
 - Translation runs synchronously inside the editor's request (up to `pollTimeout`). Planned: queue + scheduler task for large pages, and webhook completion via TYPO3 `reactions` if Supertext offers callbacks.
 - FlexForm fields and container/grid extensions are not translated yet.
 - No "retranslate" action for existing translations.
-- Export for translation / import translation are CLI commands only; a backend module for editors (page tree → export dialog, upload with summary) would reuse `Files\TranslationFileGlue`.
 - Human (professional) translation orders are not supported yet (the WordPress plugin has them).
-- Not yet tested on TYPO3 13.4.
+- Not yet tested on TYPO3 13.4 (the *Supertext* backend module included: it is written against APIs that exist in both, and registers under `web` there).
 - The extension configuration has no *Test connection* button, and saving it can't be detected right away (no event): the key check runs when the configuration is opened again or the next translation runs.
 - The `extension-configuration.png` screenshot predates the Status block and the *Send version information* setting; on TYPO3 14 a regenerated one would show the limitation below, so it is kept until that is solved.
 - On TYPO3 14, *System → Settings → Extension Configuration* renders `ext_conf_template.txt` with the install tool's failsafe container, which has none of the extension's services (nor `SiteFinder`), so the Status block shows *The Supertext status is not available here*. The key check, version reports and language mapping still work; making the block render there needs building `SiteConfiguration` by hand or another place for the status (e.g. a backend module).

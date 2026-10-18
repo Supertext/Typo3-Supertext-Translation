@@ -331,6 +331,94 @@
 				<source>The site has no language %s.</source>
 				<target>Die Website hat keine Sprache %s.</target>
 			</trans-unit>
+			<trans-unit id="module.title" approved="yes">
+				<source>Supertext</source>
+				<target>Supertext</target>
+			</trans-unit>
+			<trans-unit id="module.description" approved="yes">
+				<source>Export pages for translation as XLIFF or HTML files and import the translated files.</source>
+				<target>Seiten als XLIFF- oder HTML-Datei für die Übersetzung exportieren und die übersetzten Dateien importieren.</target>
+			</trans-unit>
+			<trans-unit id="module.shortDescription" approved="yes">
+				<source>Translation files (XLIFF, HTML)</source>
+				<target>Übersetzungsdateien (XLIFF, HTML)</target>
+			</trans-unit>
+			<trans-unit id="files.export" approved="yes">
+				<source>Export for translation</source>
+				<target>Für Übersetzung exportieren</target>
+			</trans-unit>
+			<trans-unit id="files.exportHint" approved="yes">
+				<source>Download the texts of the page “%s” and its content elements as a file for a translation tool, a translator or Supertext's web app. Import the translated file again under Import translation.</source>
+				<target>Laden Sie die Texte der Seite „%s“ und ihrer Inhaltselemente als Datei für ein Übersetzungstool, ein Übersetzungsbüro oder die Web-App von Supertext herunter. Die übersetzte Datei importieren Sie wieder unter Übersetzung importieren.</target>
+			</trans-unit>
+			<trans-unit id="files.selectPage" approved="yes">
+				<source>Select a page in the page tree to export it for translation.</source>
+				<target>Wählen Sie im Seitenbaum eine Seite aus, um sie für die Übersetzung zu exportieren.</target>
+			</trans-unit>
+			<trans-unit id="files.noLanguages" approved="yes">
+				<source>This page's site has no other languages you can edit.</source>
+				<target>Die Website dieser Seite hat keine weiteren Sprachen, die Sie bearbeiten dürfen.</target>
+			</trans-unit>
+			<trans-unit id="files.languages" approved="yes">
+				<source>Languages</source>
+				<target>Sprachen</target>
+			</trans-unit>
+			<trans-unit id="files.format" approved="yes">
+				<source>File format</source>
+				<target>Dateiformat</target>
+			</trans-unit>
+			<trans-unit id="files.formatXliff" approved="yes">
+				<source>XLIFF 1.2 (for translation tools)</source>
+				<target>XLIFF 1.2 (für Übersetzungstools)</target>
+			</trans-unit>
+			<trans-unit id="files.formatHtml" approved="yes">
+				<source>HTML (one language per file)</source>
+				<target>HTML (eine Sprache pro Datei)</target>
+			</trans-unit>
+			<trans-unit id="files.download" approved="yes">
+				<source>Download file</source>
+				<target>Datei herunterladen</target>
+			</trans-unit>
+			<trans-unit id="files.import" approved="yes">
+				<source>Import translation</source>
+				<target>Übersetzung importieren</target>
+			</trans-unit>
+			<trans-unit id="files.importHint" approved="yes">
+				<source>Upload a file exported with Export for translation (any page, at most 10 MB). The translations are saved in the page's translation, like translations made with Supertext; new translations start hidden.</source>
+				<target>Laden Sie eine Datei hoch, die mit „Für Übersetzung exportieren“ erstellt wurde (beliebige Seite, höchstens 10 MB). Die Übersetzungen werden wie Übersetzungen mit Supertext in der Übersetzung der Seite gespeichert; neue Übersetzungen sind zunächst verborgen.</target>
+			</trans-unit>
+			<trans-unit id="files.file" approved="yes">
+				<source>Translated file (XLIFF or HTML)</source>
+				<target>Übersetzte Datei (XLIFF oder HTML)</target>
+			</trans-unit>
+			<trans-unit id="files.includeChanged" approved="yes">
+				<source>Also import texts whose source changed since the export</source>
+				<target>Auch Texte importieren, deren Ausgangstext sich seit dem Export geändert hat</target>
+			</trans-unit>
+			<trans-unit id="files.importButton" approved="yes">
+				<source>Import</source>
+				<target>Importieren</target>
+			</trans-unit>
+			<trans-unit id="files.result" approved="yes">
+				<source>Import result</source>
+				<target>Ergebnis des Imports</target>
+			</trans-unit>
+			<trans-unit id="files.noFile" approved="yes">
+				<source>Choose a file to import.</source>
+				<target>Wählen Sie eine Datei zum Importieren.</target>
+			</trans-unit>
+			<trans-unit id="files.chooseLanguage" approved="yes">
+				<source>Choose at least one language.</source>
+				<target>Wählen Sie mindestens eine Sprache.</target>
+			</trans-unit>
+			<trans-unit id="files.htmlOneLanguage" approved="yes">
+				<source>An HTML file holds exactly one language. Choose one language, or XLIFF.</source>
+				<target>Eine HTML-Datei enthält genau eine Sprache. Wählen Sie eine Sprache oder XLIFF.</target>
+			</trans-unit>
+			<trans-unit id="files.uploadFailed" approved="yes">
+				<source>The file could not be uploaded. Please try again.</source>
+				<target>Die Datei konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.</target>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

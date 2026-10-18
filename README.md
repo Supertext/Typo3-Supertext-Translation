@@ -15,7 +15,7 @@ Translated records stay **hidden** (TYPO3's default for new translations) so edi
 
 Which fields are translated is derived from TCA: `input` and `text` fields that aren't excluded from localization, read-only, numeric, code editors or similar. Rich-text fields keep their markup. `bodytext` of HTML content elements is never translated (configurable).
 
-Translations made outside the API (a translation tool, a translator, Supertext's web app) come back the same way: `supertext:export` writes a page as an XLIFF 1.2 or HTML file, `supertext:import` writes the translated file into the page's translation (see the [user guide](docs/USER_GUIDE.md#translate-with-a-file-xliff-or-html)).
+Translations made outside the API (a translation tool, a translator, Supertext's web app) come back the same way: the backend module *Content → Supertext* (or `supertext:export` / `supertext:import` on the command line) exports a page as an XLIFF 1.2 or HTML file and writes the translated file into the page's translation (see the [user guide](docs/USER_GUIDE.md#translate-with-a-file-xliff-or-html)).
 
 Each site language is sent with the Supertext language the administrator chose from a list in the site configuration; without a choice, with its locale when that is a Supertext code (`de-CH`, `es`) or the usual default (`de` → `de-DE`, `nl_NL` → `nl`). The extension checks the API key automatically and, unless switched off, sends version information (no content, no key) to Supertext; see the [installation guide](docs/INSTALLATION.md#version-information-and-the-api-key-check).
 
@@ -23,7 +23,7 @@ Each site language is sent with the Supertext language the administrator chose f
 
 Besides translating with Supertext AI, you can export a page with its content elements as a file, have it translated elsewhere and import the result.
 
-- **Where:** the CLI commands `vendor/bin/typo3 supertext:export <page> <language>…` and `supertext:import <file>` (a backend module is on the roadmap).
+- **Where:** the backend module **Content → Supertext**: select a page in the page tree, tick the languages and download the file; upload the translated file under *Import translation*. The same on the command line: `vendor/bin/typo3 supertext:export <page> <language>…` and `supertext:import <file>`.
 - **Formats:** XLIFF 1.2 for translation tools such as Trados, memoQ or Phrase (formatting travels as protected tags; several target languages in one file), or HTML (one language per file) for translators or Supertext's web app, which keeps the file's head and `data-st-id` attributes, so the translated file imports as it is.
 - **Import:** the file says what it was exported from and for which language. The translations are written with the same rules as a Supertext AI translation, and a summary shows what was imported and what was skipped: source changed since the export (import those anyway with *Also import texts whose source changed since the export*), not translated, formatting changed, not in the file.
 - **Safe:** files over 10 MB, files from another system and translations that add markup the source doesn't have are refused; uploaded files aren't stored.

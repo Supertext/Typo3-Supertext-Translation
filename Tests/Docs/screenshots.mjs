@@ -7,6 +7,9 @@
  *   (must be a system maintainer: the setup admin is one).
  */
 import { chromium } from 'playwright';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const B = process.env.BASE_URL || 'http://127.0.0.1:8090';
 const USER = process.env.DEMO_ADMIN_EMAIL || 'anna.muster@example.com';
@@ -20,6 +23,28 @@ const shot = (name, clip) => page.screenshot({ path: `${OUT}/${name}.png`, ...(c
 const pad = (r, p = 8) => ({ x: Math.max(0, r.x - p), y: Math.max(0, r.y - p), width: r.width + 2 * p, height: r.height + 2 * p });
 const boxOf = async (locator) => pad(await locator.boundingBox());
 const frame = () => page.frame('list_frame');
+
+// German for the exported XLIFF from sample-de.json: a unit gets a <target> when its source
+// (codes turned back into HTML) is in the sample; the target reuses the source's codes in order.
+const german = new Map(Object.entries(JSON.parse(readFileSync(new URL('sample-de.json', import.meta.url), 'utf8')))
+  .map(([en, de]) => [en.replace(/\s+/g, ' ').trim(), de]));
+const unescapeXml = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+const escapeXml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const CODE = /<(bpt|ept|ph)\b[^>]*>[\s\S]*?<\/\1>/g;
+function translateXliff(xliff) {
+  return xliff.replace(/<source>([\s\S]*?)<\/source>(\s*)<\/trans-unit>/g, (unit, source, space) => {
+    const codes = source.match(CODE) || [];
+    const html = source.split(CODE).filter((_, i) => i % 2 === 0).map(unescapeXml)
+      .reduce((out, text, i) => out + text + (codes[i] ? unescapeXml(codes[i].replace(/^<[^>]+>|<\/\w+>$/g, '')) : ''), '');
+    const de = german.get(html.replace(/\s+/g, ' ').trim());
+    if (de === undefined) return unit;
+    const parts = de.split(/(<[^>]+>)/);
+    if (parts.filter((_, i) => i % 2 === 1).length !== codes.length) return unit;
+    let c = 0;
+    const target = parts.map((p, i) => (i % 2 === 1 ? codes[c++] : escapeXml(p))).join('');
+    return `<source>${source}</source>${space}<target>${target}</target>${space}</trans-unit>`;
+  });
+}
 
 // Log in
 await page.goto(`${B}/typo3/`);
@@ -66,6 +91,28 @@ await next('Finish');
 await frame().getByText(/Supertext translated/).waitFor({ timeout: 30000 });
 await page.waitForTimeout(1500);
 await shot('translated-page');
+
+// Content -> Supertext: export for translation, import translation
+await page.goto(`${B}/typo3/module/web/supertext?id=${PAGE_ID}`);
+await frame().locator('#supertext-export').waitFor();
+await frame().getByLabel(/Deutsch \(Schweiz\)/).check();
+await frame().getByLabel(/Français \(Suisse\)/).check();
+await frame().evaluate(() => document.activeElement?.blur());
+await page.waitForTimeout(500);
+await shot('module-export', await boxOf(frame().locator('#supertext-export')));
+
+// Download the German XLIFF, fill in the German of sample-de.json (what a translator would
+// deliver) and import it.
+await frame().getByLabel(/Français \(Suisse\)/).uncheck();
+const [download] = await Promise.all([page.waitForEvent('download'), frame().locator('#supertext-export button[type=submit]').click()]);
+const xliffPath = join(tmpdir(), download.suggestedFilename());
+await download.saveAs(xliffPath);
+writeFileSync(xliffPath, translateXliff(readFileSync(xliffPath, 'utf8')));
+await frame().locator('#supertext-file').setInputFiles(xliffPath);
+await Promise.all([frame().waitForNavigation(), frame().locator('#supertext-import button[type=submit]').click()]);
+await frame().locator('#supertext-result').waitFor();
+await page.waitForTimeout(800);
+await shot('module-import-result', await boxOf(frame().locator('#supertext-result')));
 
 // --- Installation guide -----------------------------------------------------
 // Extension configuration (System -> Settings; asks to confirm the password first)

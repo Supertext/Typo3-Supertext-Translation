@@ -249,6 +249,72 @@
 			<trans-unit id="file.error.noLanguage">
 				<source>The site has no language %s.</source>
 			</trans-unit>
+			<trans-unit id="module.title">
+				<source>Supertext</source>
+			</trans-unit>
+			<trans-unit id="module.description">
+				<source>Export pages for translation as XLIFF or HTML files and import the translated files.</source>
+			</trans-unit>
+			<trans-unit id="module.shortDescription">
+				<source>Translation files (XLIFF, HTML)</source>
+			</trans-unit>
+			<trans-unit id="files.export">
+				<source>Export for translation</source>
+			</trans-unit>
+			<trans-unit id="files.exportHint">
+				<source>Download the texts of the page “%s” and its content elements as a file for a translation tool, a translator or Supertext's web app. Import the translated file again under Import translation.</source>
+			</trans-unit>
+			<trans-unit id="files.selectPage">
+				<source>Select a page in the page tree to export it for translation.</source>
+			</trans-unit>
+			<trans-unit id="files.noLanguages">
+				<source>This page's site has no other languages you can edit.</source>
+			</trans-unit>
+			<trans-unit id="files.languages">
+				<source>Languages</source>
+			</trans-unit>
+			<trans-unit id="files.format">
+				<source>File format</source>
+			</trans-unit>
+			<trans-unit id="files.formatXliff">
+				<source>XLIFF 1.2 (for translation tools)</source>
+			</trans-unit>
+			<trans-unit id="files.formatHtml">
+				<source>HTML (one language per file)</source>
+			</trans-unit>
+			<trans-unit id="files.download">
+				<source>Download file</source>
+			</trans-unit>
+			<trans-unit id="files.import">
+				<source>Import translation</source>
+			</trans-unit>
+			<trans-unit id="files.importHint">
+				<source>Upload a file exported with Export for translation (any page, at most 10 MB). The translations are saved in the page's translation, like translations made with Supertext; new translations start hidden.</source>
+			</trans-unit>
+			<trans-unit id="files.file">
+				<source>Translated file (XLIFF or HTML)</source>
+			</trans-unit>
+			<trans-unit id="files.includeChanged">
+				<source>Also import texts whose source changed since the export</source>
+			</trans-unit>
+			<trans-unit id="files.importButton">
+				<source>Import</source>
+			</trans-unit>
+			<trans-unit id="files.result">
+				<source>Import result</source>
+			</trans-unit>
+			<trans-unit id="files.noFile">
+				<source>Choose a file to import.</source>
+			</trans-unit>
+			<trans-unit id="files.chooseLanguage">
+				<source>Choose at least one language.</source>
+			</trans-unit>
+			<trans-unit id="files.htmlOneLanguage">
+				<source>An HTML file holds exactly one language. Choose one language, or XLIFF.</source>
+			</trans-unit>
+			<trans-unit id="files.uploadFailed">
+				<source>The file could not be uploaded. Please try again.</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

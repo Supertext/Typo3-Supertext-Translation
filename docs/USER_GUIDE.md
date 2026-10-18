@@ -63,41 +63,36 @@ The page's URL (slug) is rebuilt from the translated title, e.g. `/about-us` →
 
 ## Translate with a file (XLIFF or HTML)
 
-Instead of translating with Supertext AI right away, you can export a page as a file, have it translated elsewhere — in a translation tool (Trados, memoQ, Phrase …), by a translator, or by uploading it to Supertext's web app — and import the translated file again. In TYPO3 this runs on the command line (the extension hooks into TYPO3's own *Localize* step and has no backend screen of its own), so ask whoever has access to the server (`vendor/bin/typo3`) if you don't.
+Instead of translating with Supertext AI right away, you can export a page as a file, have it translated elsewhere — in a translation tool (Trados, memoQ, Phrase …), by a translator, or by uploading it to Supertext's web app — and import the translated file again. Both happen in **Content → Supertext** (*Web → Supertext* in TYPO3 13). If you don't see it, ask your administrator to give your backend group access to the *Supertext* module.
 
 **Export for translation**
 
-```bash
-vendor/bin/typo3 supertext:export 12 1            # page 12 into site language 1, XLIFF → typo3-12-de-CH.xlf
-vendor/bin/typo3 supertext:export 12 1 2          # into two languages, one XLIFF file → typo3-12.xlf
-vendor/bin/typo3 supertext:export 12 1 --format=html --output=faq-de.html   # HTML: one language per file
-```
+1. Open **Content → Supertext** and select the page in the page tree.
+2. Under *Export for translation*, tick the *Languages* to translate into.
+3. Choose the *File format* and click **Download file**.
 
-- **The page and its language:** the page uid (in the default language) and the target site language id(s), as in *Sites → Setup*. The file holds the page's texts, its content elements and their image captions — exactly what Supertext translates when you localize the page.
-- **File format:** *XLIFF 1.2 (for translation tools)* — the better choice for translation tools, which protect the formatting — or *HTML (one language per file)*, which Supertext's web app and anyone who translates HTML can work with. HTML files must keep their head and the `data-st-id` attributes.
+![The Supertext module with Export for translation: the page "FAQs" with the languages Deutsch (Schweiz) and Français (Suisse) ticked, XLIFF 1.2 selected and the Download file button](images/module-export.png)
+
+- **What's in the file:** the page's texts, its content elements and their image captions — exactly what Supertext translates when you localize the page. Only the languages you may edit are listed.
+- **File format:** *XLIFF 1.2 (for translation tools)* — the better choice for translation tools, which protect the formatting; several languages go into one file — or *HTML (one language per file)*, which Supertext's web app and anyone who translates HTML can work with. HTML files must keep their head and the `data-st-id` attributes.
 - A page with nothing to translate gives *Nothing to translate.* and no file.
 
 **Import translation**
 
-```bash
-vendor/bin/typo3 supertext:import typo3-12-de-CH.xlf
-vendor/bin/typo3 supertext:import typo3-12-de-CH.xlf --include-changed
-```
+1. Open **Content → Supertext** (any page can be selected: the file says which page and language it belongs to).
+2. Under *Import translation*, choose the *Translated file (XLIFF or HTML)*, at most 10 MB.
+3. Tick *Also import texts whose source changed since the export* only if you want those too (see below), and click **Import**.
 
 The translated texts go into the page's translation in that language. Records that aren't translated yet are created first, **hidden** like any new translation, so you can review them before publishing. Texts that are already translated are replaced by the file's. Files of at most 10 MB are accepted.
 
-The command prints a summary per page and language, for example:
+The *Import result* at the top of the screen shows a summary per page and language:
 
-```
-Page 12 “FAQs” → Deutsch (Schweiz)
-  Imported: 28
-  Skipped, source changed since the export: 2
-```
+![Import result in the Supertext module: Page 5 "FAQs" → Deutsch (Schweiz), Imported: 30](images/module-import-result.png)
 
 | Line | Meaning |
 | --- | --- |
 | *Imported* | Written into the translation. |
-| *Skipped, source changed since the export* | Someone edited the English text after the export, so the translation may be out of date. Not written unless you add `--include-changed` (*Also import texts whose source changed since the export*). |
+| *Skipped, source changed since the export* | Someone edited the English text after the export, so the translation may be out of date. Not written unless you tick *Also import texts whose source changed since the export*. |
 | *Not translated in the file* | The translator left the text empty. |
 | *Formatting changed, not imported* | The translation broke or added formatting (tags) that the original doesn't have. |
 | *Not in the file* | Texts added to the page after the export. Export again to translate them. |
@@ -107,11 +102,26 @@ An HTML file imported unchanged writes the original text into the translation: H
 | Message | What it means |
 | --- | --- |
 | *This file isn't a valid XLIFF or HTML translation file.* | The file is damaged or isn't an XLIFF or HTML file. |
-| *This file wasn't exported by the Supertext extension, or its header was removed.* | Use a file from `supertext:export`; in HTML files the head must stay as it was. |
+| *This file wasn't exported by the Supertext extension, or its header was removed.* | Use a file from *Export for translation*; in HTML files the head must stay as it was. |
 | *This file belongs to another system (…).* | The file was exported by another Supertext plugin (e.g. from another CMS). |
 | *The page this file was exported from no longer exists.* | The page was deleted after the export. |
-| *The site has no language ….* | The target language was removed from the site after the export. |
+| *The site has no language ….* | The target language was removed from the site after the export, or you may not edit that language. |
+| *Choose at least one language.* / *An HTML file holds exactly one language. Choose one language, or XLIFF.* | Tick at least one language; for HTML exactly one. |
+| *Select a page in the page tree to export it for translation.* | Click a page in the page tree first. |
 | *The file is too large (at most 10 MB).* | Split the export into several pages. |
+
+The import writes as you, so TYPO3's own permissions apply: records you may not edit are reported under the page with TYPO3's message and left unchanged.
+
+**On the command line.** The same works without the backend, for scripts or large batches (run by whoever has access to the server):
+
+```bash
+vendor/bin/typo3 supertext:export 12 1            # page 12 into site language 1, XLIFF → typo3-12-de-CH.xlf
+vendor/bin/typo3 supertext:export 12 1 2          # into two languages, one XLIFF file → typo3-12.xlf
+vendor/bin/typo3 supertext:export 12 1 --format=html --output=faq-de.html   # HTML: one language per file
+vendor/bin/typo3 supertext:import typo3-12-de-CH.xlf [--include-changed]
+```
+
+Page uid (default language) and site language ids as in *Sites → Setup*; the command prints the same summary.
 
 ## Formal and informal language
 

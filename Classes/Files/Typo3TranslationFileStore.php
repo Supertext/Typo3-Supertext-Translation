@@ -15,6 +15,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Site\SiteFinder;
+use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -46,6 +47,12 @@ final class Typo3TranslationFileStore implements TranslationFileStore
         if (!is_array($row) || (int)($row['sys_language_uid'] ?? 0) !== 0) {
             return null;
         }
+        // Editors (backend module) only get pages they may see; admins and the CLI user see all.
+        $user = $GLOBALS['BE_USER'] ?? null;
+        if ($user instanceof BackendUserAuthentication && !$user->isAdmin()
+            && !is_array(BackendUtility::readPageAccess($page, $user->getPagePermsClause(Permission::PAGE_SHOW)))) {
+            return null;
+        }
         $segments = [];
         foreach ($this->records($page, $row) as [$table, $record]) {
             foreach ($this->fieldCollector->collect($table, $record) as $field => $isHtml) {
@@ -58,6 +65,10 @@ final class Typo3TranslationFileStore implements TranslationFileStore
     public function language(int $page, int $language): ?FileLanguage
     {
         if ($language <= 0) {
+            return null;
+        }
+        $user = $GLOBALS['BE_USER'] ?? null;
+        if ($user instanceof BackendUserAuthentication && !$user->checkLanguageAccess($language)) {
             return null;
         }
         try {
