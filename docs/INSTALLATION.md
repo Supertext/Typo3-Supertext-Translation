@@ -215,6 +215,14 @@ Environment variables:
 
 **Stored locally:** what was reported last, the time of a failed report and the latest key check (with a fingerprint of the key, never the key) in TYPO3's registry (table `sys_registry`, namespace `supertext_translation`), plus a fingerprint of the extension configuration to notice saves.
 
+## Translation files (export and import)
+
+`supertext:export` and `supertext:import` (see the [user guide](USER_GUIDE.md#translate-with-a-file-xliff-or-html)) export a page as an XLIFF 1.2 or HTML file and import the translated file. There is nothing to configure, and no API key is needed for them (nothing is sent to Supertext).
+
+- **Permissions:** they run on the command line as TYPO3's CLI user (`_cli_`, an administrator), so whoever may run `vendor/bin/typo3` on the server may export and import. The import writes through the DataHandler like a translation, with history and reference index.
+- **File size:** files larger than 10 MB are refused before they are read. Imported files are parsed in memory and not stored; the SDK refuses files that aren't well-formed XLIFF or HTML (no DTDs or entities) and takes the formatting only from the current original text.
+- New translations created by an import are hidden for review, like every new translation; existing translations are overwritten with the file's texts.
+
 ## Updating
 
 ```bash

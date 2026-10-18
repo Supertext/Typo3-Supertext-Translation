@@ -61,6 +61,58 @@ The page's URL (slug) is rebuilt from the translated title, e.g. `/about-us` →
 - Numbers, dates, e-mail addresses, links' targets, colours and other technical fields.
 - Content that already has a translation in that language — translating twice never overwrites your edits.
 
+## Translate with a file (XLIFF or HTML)
+
+Instead of translating with Supertext AI right away, you can export a page as a file, have it translated elsewhere — in a translation tool (Trados, memoQ, Phrase …), by a translator, or by uploading it to Supertext's web app — and import the translated file again. In TYPO3 this runs on the command line (the extension hooks into TYPO3's own *Localize* step and has no backend screen of its own), so ask whoever has access to the server (`vendor/bin/typo3`) if you don't.
+
+**Export for translation**
+
+```bash
+vendor/bin/typo3 supertext:export 12 1            # page 12 into site language 1, XLIFF → typo3-12-de-CH.xlf
+vendor/bin/typo3 supertext:export 12 1 2          # into two languages, one XLIFF file → typo3-12.xlf
+vendor/bin/typo3 supertext:export 12 1 --format=html --output=faq-de.html   # HTML: one language per file
+```
+
+- **The page and its language:** the page uid (in the default language) and the target site language id(s), as in *Sites → Setup*. The file holds the page's texts, its content elements and their image captions — exactly what Supertext translates when you localize the page.
+- **File format:** *XLIFF 1.2 (for translation tools)* — the better choice for translation tools, which protect the formatting — or *HTML (one language per file)*, which Supertext's web app and anyone who translates HTML can work with. HTML files must keep their head and the `data-st-id` attributes.
+- A page with nothing to translate gives *Nothing to translate.* and no file.
+
+**Import translation**
+
+```bash
+vendor/bin/typo3 supertext:import typo3-12-de-CH.xlf
+vendor/bin/typo3 supertext:import typo3-12-de-CH.xlf --include-changed
+```
+
+The translated texts go into the page's translation in that language. Records that aren't translated yet are created first, **hidden** like any new translation, so you can review them before publishing. Texts that are already translated are replaced by the file's. Files of at most 10 MB are accepted.
+
+The command prints a summary per page and language, for example:
+
+```
+Page 12 “FAQs” → Deutsch (Schweiz)
+  Imported: 28
+  Skipped, source changed since the export: 2
+```
+
+| Line | Meaning |
+| --- | --- |
+| *Imported* | Written into the translation. |
+| *Skipped, source changed since the export* | Someone edited the English text after the export, so the translation may be out of date. Not written unless you add `--include-changed` (*Also import texts whose source changed since the export*). |
+| *Not translated in the file* | The translator left the text empty. |
+| *Formatting changed, not imported* | The translation broke or added formatting (tags) that the original doesn't have. |
+| *Not in the file* | Texts added to the page after the export. Export again to translate them. |
+
+An HTML file imported unchanged writes the original text into the translation: HTML can't mark a text as untranslated, so only import HTML files that have been translated.
+
+| Message | What it means |
+| --- | --- |
+| *This file isn't a valid XLIFF or HTML translation file.* | The file is damaged or isn't an XLIFF or HTML file. |
+| *This file wasn't exported by the Supertext extension, or its header was removed.* | Use a file from `supertext:export`; in HTML files the head must stay as it was. |
+| *This file belongs to another system (…).* | The file was exported by another Supertext plugin (e.g. from another CMS). |
+| *The page this file was exported from no longer exists.* | The page was deleted after the export. |
+| *The site has no language ….* | The target language was removed from the site after the export. |
+| *The file is too large (at most 10 MB).* | Split the export into several pages. |
+
 ## Formal and informal language
 
 Your administrator can set each language to formal (*Sie/vous/Lei*) or informal (*du/tu*), for the languages where Supertext offers it (for example German, French and Italian, but not English). Ask them if the tone doesn't fit your site.

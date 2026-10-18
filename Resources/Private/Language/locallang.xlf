@@ -207,6 +207,48 @@
 			<trans-unit id="siteLanguage.politeness.description">
 				<source>Formal (Sie, vous, Lei) or informal (du, tu) address, for languages where Supertext offers it.</source>
 			</trans-unit>
+			<trans-unit id="file.saved">
+				<source>File saved: %s</source>
+			</trans-unit>
+			<trans-unit id="file.nothing">
+				<source>Nothing to translate.</source>
+			</trans-unit>
+			<trans-unit id="file.job">
+				<source>Page %d “%s” → %s</source>
+			</trans-unit>
+			<trans-unit id="file.summary.ok">
+				<source>Imported: %d</source>
+			</trans-unit>
+			<trans-unit id="file.summary.changed">
+				<source>Skipped, source changed since the export: %d</source>
+			</trans-unit>
+			<trans-unit id="file.summary.untranslated">
+				<source>Not translated in the file: %d</source>
+			</trans-unit>
+			<trans-unit id="file.summary.invalid">
+				<source>Formatting changed, not imported: %d</source>
+			</trans-unit>
+			<trans-unit id="file.summary.missing">
+				<source>Not in the file: %d</source>
+			</trans-unit>
+			<trans-unit id="file.error.invalidFile">
+				<source>This file isn't a valid XLIFF or HTML translation file.</source>
+			</trans-unit>
+			<trans-unit id="file.error.missingMetadata">
+				<source>This file wasn't exported by the Supertext extension, or its header was removed.</source>
+			</trans-unit>
+			<trans-unit id="file.error.tooLarge">
+				<source>The file is too large (at most 10 MB).</source>
+			</trans-unit>
+			<trans-unit id="file.error.otherSystem">
+				<source>This file belongs to another system (%s).</source>
+			</trans-unit>
+			<trans-unit id="file.error.notFound">
+				<source>The page this file was exported from no longer exists.</source>
+			</trans-unit>
+			<trans-unit id="file.error.noLanguage">
+				<source>The site has no language %s.</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

@@ -43,6 +43,9 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Upgrades\SupertextCodeUpgradeWizard` | Upgrade wizard `supertextTranslation_languageCodes` (Install namespace: TYPO3 13, and its alias in 14): rewrites 0.1 free-text `supertext_code` values with `LanguageResolver::migratedCode()` through `SiteWriter`. Only listed when something changes. |
 | `Api\Typo3HttpTransport` | The SDK's `HttpTransport` over TYPO3's `RequestFactory`, so `$GLOBALS['TYPO3_CONF_VARS']['HTTP']` (proxy, TLS, timeouts) applies and ext-curl isn't required. |
 | `Command\LocalizeCommand` | `supertext:localize <page> <language> [--recursive]`. |
+| `Command\ExportCommand`, `Command\ImportCommand` | `supertext:export <page> <language…> [--format=xliff\|html] [--output=<file>]` and `supertext:import <file> [--include-changed]`, see *Translation files*. |
+| `Files\TranslationFileGlue` | Export/import with the SDK's `TranslationFiles`, without TYPO3 classes (tested by `Tests/TranslationFilesTest.php`): builds the jobs (reference, languages via `LanguageResolver`), checks imported jobs, counts the results and hands the texts to the store. |
+| `Files\Typo3TranslationFileStore` | The TYPO3 side (`Files\TranslationFileStore`): collects a page's segments with `FieldCollector`, finds the site language, localizes missing records and writes through `TranslationService::writeBack()`. |
 | `Localization\Labels` | Messages in the backend user's language from `Resources/Private/Language/locallang.xlf`; translates the SDK's `SupertextException`s by their `errorCode` (`Labels::ERROR_LABELS`). |
 | `Configuration\ExtensionSettings` | Typed extension configuration plus `SUPERTEXT_API_KEY` / `SUPERTEXT_API_ENDPOINT` / `SUPERTEXT_VERSION_REPORTS` env overrides, and the configuration fingerprint. |
 
@@ -50,7 +53,7 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 
 The extension talks to Supertext through the official **Supertext SDK for PHP** ([Supertext-API-SDK-and-Guide](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php), MIT). The SDK implements the protocol below, the HTML packing (one `data-st-id` element per field), the language code rules, the 429 retries and the API key check (`Client::checkApiKey()`; the version reports are Supertext Plugin Health's, see below); it is tested against the shared test vectors of all Supertext SDKs. The extension only collects fields, maps languages and writes the results back.
 
-**Bundled copy:** the extension ships the SDK (0.4.0) in `lib/supertext-sdk/` (sources, `LICENSE`, `COMMIT` with the SDK commit, `VERSION`, a short README), with the namespace changed from `Supertext\Sdk` to `Supertext\Typo3Translation\Sdk` and autoloaded by the extension's `composer.json`. Everything that talks to the API is in the versioned namespace `…\Sdk\V1` (`src/V1/`); the HTTP transport (`…\Sdk\Http`) and `…\Sdk\Supertext::SDK_VERSION` are version-neutral. Sites install only the extension; another package that requires `supertext/supertext-sdk` itself can't clash with it. This stays so after the SDK is on Packagist.
+**Bundled copy:** the extension ships the SDK (0.5.0) in `lib/supertext-sdk/` (sources, `LICENSE`, `COMMIT` with the SDK commit, `VERSION`, a short README), with the namespace changed from `Supertext\Sdk` to `Supertext\Typo3Translation\Sdk` and autoloaded by the extension's `composer.json`. Everything that talks to the API is in the versioned namespace `…\Sdk\V1` (`src/V1/`); translation files (`…\Sdk\Files`, see *Translation files*), the HTTP transport (`…\Sdk\Http`) and `…\Sdk\Supertext::SDK_VERSION` are version-neutral. Sites install only the extension; another package that requires `supertext/supertext-sdk` itself can't clash with it. This stays so after the SDK is on Packagist.
 
 - Update it with `scripts/vendor-sdk.sh [commit-or-branch]` (default `main`; `SDK_DIR=<clone>` uses a local clone), run the tests, and commit with a CHANGELOG entry.
 - Never edit the copy: fix the SDK in its own repository, then re-run the script. PHPStan analyses `Classes/` only.
@@ -87,6 +90,18 @@ Supertext accepts exactly the codes of its `GET features` (the SDK's `Languages:
 - Translating within one language (source `en`, target `en-GB`) is allowed.
 
 The mapping lives in the site configuration (`config/sites/<site>/config.yaml`, per language), editable in the backend through the *Supertext* palette of the site language form (`Configuration/SiteConfiguration/Overrides/site_language.php`, a select per site language; empty = *Default (de-DE)* from `Languages::suggestTarget()`, or *— choose —* where there is no default). There is no separate env/config override: the YAML is the configuration file and the form edits it. Old free-text values are migrated by `Upgrades\SupertextCodeUpgradeWizard`; the Status block marks only languages without mapping, exact match and default. The docs stand-in (`Tests/Docs/stand-in.mjs`) rejects regional sources like the real API.
+
+## Translation files (XLIFF and HTML)
+
+*Export for translation* and *Import translation* with the SDK's `TranslationFiles` (SDK 0.5.0, `Supertext\Typo3Translation\Sdk\Files`; integration guide → *Translation files: XLIFF and HTML*). Nothing here calls the API.
+
+**Where:** CLI commands next to `supertext:localize`. The extension has no backend screen of its own: API translation hooks into TYPO3's own *Localize* step, which has no place for a file download or upload, and the extension configuration is the install tool's (not reachable for editors, and on TYPO3 14 without the extension's services). A backend module for editors is on the roadmap; `Files\TranslationFileGlue` has no TYPO3 classes, so it can serve one unchanged.
+
+**Item and segments:** an item is a page in the default language with its content elements (`pid` = the page, `sys_language_uid` = 0, not deleted, hidden ones too) and the file references of both, the records localizing the page in the Page module sends to Supertext. Fields come from `FieldCollector` (the same as API translation); segment keys are `<table>:<uid>:<field>` of the default-language records (`pages:12:title`, `tt_content:7:bodytext`, `sys_file_reference:3:alternative`).
+
+**Job metadata:** `plugin` = `Typo3-Supertext-Translation`; `reference` = `page:<page uid>:<site language id>` (e.g. `page:12:1`; `TranslationFileGlue::reference()` / `parseReference()`, anything else is *not found*); `sourceLanguage` / `targetLanguage` = `LanguageResolver::sourceCode()` / `targetCode()` of the site's default language and the target language (mapping, exact match, default), else the locale with `-` for `_` (`en_IE` → `en-IE`), so unmapped languages don't block an export. File names `typo3-<page>-<target>.xlf` / `.html`, `typo3-<page>.xlf` for several languages.
+
+**Import:** `importFile()` refuses files over 10 MB (`TranslationFileGlue::MAX_UPLOAD_BYTES`) before reading; `TranslationFiles::read()`; per job: `plugin` must be ours (*other system*), the reference must parse and the page exist (*not found*), the site must have the language (*no language*); the segments are collected again and `importTranslations()` compares them. `ok` results are written (`source_changed` only with `--include-changed`); `untranslated`, `invalid_markup` and `missing` are only counted. `Typo3TranslationFileStore::write()` finds each record's translation (`transOrigPointerField` + `languageField`), localizes missing ones with the DataHandler `localize` command (page first, then content elements, then file references; `TranslationService::$running` keeps our hook from translating them with the API; new translations start hidden), then writes one datamap through `TranslationService::writeBack()` (slugs from the translated title, DataHandler as the backend user). Labels: `file.*` in `locallang.xlf`; `Labels::forFileError()` maps the SDK's `TranslationFileError` codes and `Files\TranslationFileGlueError`, `Labels::importSummary()` builds the summary.
 
 ## Version reports, API key check and ping (Commando Center)
 
@@ -130,12 +145,13 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at `Tests/Docs/stand-
 composer install --no-dev        # TYPO3 core (the SDK and Plugin Health are bundled in lib/)
 php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → Supertext codes (mapping, exact, default); the site language select, the upgrade migration and the save check; translateTexts round trip with a fake transport
 php Tests/ReportingTest.php      # Commando Center glue: which reporter action runs when, stored state, report contents, center failures, a state stored by the SDK 0.2 reporter, setting + env, ping answers and middleware
+php Tests/TranslationFilesTest.php  # export/import glue with a fake store: reference round trip, collector keys and mapping in the jobs, other plugin / unknown reference / missing language, ok written, source_changed only with the option, untranslated / invalid / missing not written, files over 10 MB refused
 php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs); every label the code and configuration use exists
 ```
 
 The tests use fake transports: they never call the live Supertext API or the Commando Center.
 
-CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3, 8.4 and 8.5, installs the dependencies, runs the three tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
+CI (`.github/workflows/ci.yml`) lints all PHP files on 8.2, 8.3, 8.4 and 8.5, installs the dependencies, runs the four tests and syntax-checks the demo entrypoint on every push and pull request, and runs PHPStan (see *Code quality and security checks*).
 
 ## Demo (Railway)
 
@@ -233,6 +249,7 @@ Releases are published by `.github/workflows/release.yml` when the version is of
 - Translation runs synchronously inside the editor's request (up to `pollTimeout`). Planned: queue + scheduler task for large pages, and webhook completion via TYPO3 `reactions` if Supertext offers callbacks.
 - FlexForm fields and container/grid extensions are not translated yet.
 - No "retranslate" action for existing translations.
+- Export for translation / import translation are CLI commands only; a backend module for editors (page tree → export dialog, upload with summary) would reuse `Files\TranslationFileGlue`.
 - Human (professional) translation orders are not supported yet (the WordPress plugin has them).
 - Not yet tested on TYPO3 13.4.
 - The extension configuration has no *Test connection* button, and saving it can't be detected right away (no event): the key check runs when the configuration is opened again or the next translation runs.

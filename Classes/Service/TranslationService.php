@@ -142,6 +142,33 @@ final class TranslationService
     }
 
     /**
+     * Writes translations into existing translated records (file import, TranslationFileGlue)
+     * with the same rules as API results: one DataHandler run as the user, page slugs from the
+     * translated title (if configured), our own hook kept out.
+     *
+     * @param array<string, array<int, array<string, string>>> $datamap table => translated uid => field => text
+     * @return list<string> DataHandler errors
+     */
+    public function writeBack(array $datamap, BackendUserAuthentication $backendUser): array
+    {
+        $result = new TranslationResult();
+        if ($this->settings->shouldRegenerateSlugs()) {
+            $records = [];
+            foreach (array_keys($datamap['pages'] ?? []) as $uid) {
+                $record = BackendUtility::getRecord('pages', $uid);
+                if (is_array($record)) {
+                    $records['pages:' . $uid] = $record;
+                }
+            }
+            $this->addSlugs($datamap, $records);
+        }
+        if ($datamap !== []) {
+            $this->write($datamap, $backendUser, $result);
+        }
+        return $result->errors;
+    }
+
+    /**
      * Builds the URL segment of translated pages from their translated title.
      *
      * @param array<string, array<int, array<string, string>>> $datamap

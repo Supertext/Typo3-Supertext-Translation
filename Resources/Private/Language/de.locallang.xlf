@@ -275,6 +275,62 @@
 				<source>Formal (Sie, vous, Lei) or informal (du, tu) address, for languages where Supertext offers it.</source>
 				<target>Formelle (Sie) oder informelle (du) Anrede, für Sprachen, in denen Supertext sie anbietet.</target>
 			</trans-unit>
+			<trans-unit id="file.saved" approved="yes">
+				<source>File saved: %s</source>
+				<target>Datei gespeichert: %s</target>
+			</trans-unit>
+			<trans-unit id="file.nothing" approved="yes">
+				<source>Nothing to translate.</source>
+				<target>Nichts zu übersetzen.</target>
+			</trans-unit>
+			<trans-unit id="file.job" approved="yes">
+				<source>Page %d “%s” → %s</source>
+				<target>Seite %d „%s“ → %s</target>
+			</trans-unit>
+			<trans-unit id="file.summary.ok" approved="yes">
+				<source>Imported: %d</source>
+				<target>Importiert: %d</target>
+			</trans-unit>
+			<trans-unit id="file.summary.changed" approved="yes">
+				<source>Skipped, source changed since the export: %d</source>
+				<target>Übersprungen, Ausgangstext seit dem Export geändert: %d</target>
+			</trans-unit>
+			<trans-unit id="file.summary.untranslated" approved="yes">
+				<source>Not translated in the file: %d</source>
+				<target>In der Datei nicht übersetzt: %d</target>
+			</trans-unit>
+			<trans-unit id="file.summary.invalid" approved="yes">
+				<source>Formatting changed, not imported: %d</source>
+				<target>Formatierung verändert, nicht importiert: %d</target>
+			</trans-unit>
+			<trans-unit id="file.summary.missing" approved="yes">
+				<source>Not in the file: %d</source>
+				<target>Nicht in der Datei: %d</target>
+			</trans-unit>
+			<trans-unit id="file.error.invalidFile" approved="yes">
+				<source>This file isn't a valid XLIFF or HTML translation file.</source>
+				<target>Diese Datei ist keine gültige XLIFF- oder HTML-Übersetzungsdatei.</target>
+			</trans-unit>
+			<trans-unit id="file.error.missingMetadata" approved="yes">
+				<source>This file wasn't exported by the Supertext extension, or its header was removed.</source>
+				<target>Diese Datei wurde nicht von der Supertext-Erweiterung exportiert, oder ihr Kopfbereich wurde entfernt.</target>
+			</trans-unit>
+			<trans-unit id="file.error.tooLarge" approved="yes">
+				<source>The file is too large (at most 10 MB).</source>
+				<target>Die Datei ist zu gross (höchstens 10 MB).</target>
+			</trans-unit>
+			<trans-unit id="file.error.otherSystem" approved="yes">
+				<source>This file belongs to another system (%s).</source>
+				<target>Diese Datei gehört zu einem anderen System (%s).</target>
+			</trans-unit>
+			<trans-unit id="file.error.notFound" approved="yes">
+				<source>The page this file was exported from no longer exists.</source>
+				<target>Die Seite, aus der diese Datei exportiert wurde, existiert nicht mehr.</target>
+			</trans-unit>
+			<trans-unit id="file.error.noLanguage" approved="yes">
+				<source>The site has no language %s.</source>
+				<target>Die Website hat keine Sprache %s.</target>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>
