@@ -34,13 +34,14 @@ use TYPO3\CMS\Core\Site\SiteFinder;
  *       locale: de_CH.UTF-8
  *       supertext_code: de-CH        # optional, Supertext target code
  *       supertext_politeness: more   # optional: more (formal) | less (informal)
+ *       supertext_review: true       # optional: translations into it go through the review service
  */
 final class LanguageResolver
 {
     public function __construct(private readonly SiteFinder $siteFinder) {}
 
     /**
-     * @return array{target: string, source: string, politeness: string, title: string}|null null: the page's site has no such language
+     * @return array{target: string, source: string, politeness: string, review: bool, title: string}|null null: the page's site has no such language
      * @throws SupertextException unsupported_language when a language has no Supertext code
      */
     public function resolve(int $pageId, int $targetLanguageId): ?array
@@ -65,7 +66,7 @@ final class LanguageResolver
     }
 
     /**
-     * @return array{target: string, source: string, politeness: string, title: string}
+     * @return array{target: string, source: string, politeness: string, review: bool, title: string}
      * @throws SupertextException unsupported_language
      */
     public function resolveLanguage(Site $site, SiteLanguage $target): array
@@ -74,6 +75,7 @@ final class LanguageResolver
             'target' => self::targetCode(self::localeOf($target), self::overrideOf($target)),
             'source' => self::sourceCode(self::localeOf($site->getDefaultLanguage()), self::overrideOf($site->getDefaultLanguage())),
             'politeness' => self::politenessOf($target),
+            'review' => self::reviewOf($target),
             'title' => $target->getTitle(),
         ];
     }
@@ -169,6 +171,12 @@ final class LanguageResolver
     {
         $politeness = (string)($language->toArray()['supertext_politeness'] ?? '');
         return in_array($politeness, [Politeness::MORE, Politeness::LESS], true) ? $politeness : Politeness::DEFAULT;
+    }
+
+    /** "Translation review" (supertext_review) of a target language: translations into it go through the review service. */
+    public static function reviewOf(SiteLanguage $language): bool
+    {
+        return $language->getLanguageId() > 0 && (bool)($language->toArray()['supertext_review'] ?? false);
     }
 
     /** The locale without encoding or modifier ("de_CH.UTF-8" => "de_CH"). */

@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use Supertext\Typo3Translation\Api\SupertextClientFactory;
+use Supertext\Typo3Translation\Configuration\ExtensionSettings;
 use Supertext\Typo3Translation\Configuration\SiteLanguageItems;
 use Supertext\Typo3Translation\EventListener\ValidateSupertextCodes;
 use Supertext\Typo3Translation\Localization\Labels;
@@ -19,6 +21,11 @@ use Supertext\Typo3Translation\Sdk\V1\Segment;
 use Supertext\Typo3Translation\Sdk\V1\SupertextException;
 use Supertext\Typo3Translation\Service\LanguageResolver;
 use Supertext\Typo3Translation\Upgrades\SupertextCodeUpgradeWizard;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Http\Client\GuzzleClientFactory;
+use TYPO3\CMS\Core\Http\RequestFactory;
+use TYPO3\CMS\Core\Http\Uri;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 
 $failures = [];
 $check = static function (string $name, mixed $actual, mixed $expected) use (&$failures): void {
@@ -174,6 +181,60 @@ try {
 // 5. The SDK's unsupported_language / unsupported_feature errors have their own labels.
 $check('unsupported_language label', $labels[SupertextException::UNSUPPORTED_LANGUAGE] ?? null, 'error.unsupportedLanguage');
 $check('unsupported_feature label', $labels[SupertextException::UNSUPPORTED_FEATURE] ?? null, 'error.unsupportedFeature');
+
+// 6. Translation review: a site language with supertext_review goes through the review service
+//    (upload, status, download and delete), others directly; reviewUrl '' turns it off.
+$recorder = new class implements HttpTransport {
+    /** @var list<string> */
+    public array $calls = [];
+
+    public function send(HttpRequest $request): HttpResponse
+    {
+        $this->calls[] = $request->method . ' ' . $request->url;
+        if ($request->method === 'POST') {
+            return new HttpResponse(200, '{"file_id":"f1"}');
+        }
+        if (str_ends_with($request->url, '/status')) {
+            return new HttpResponse(200, '{"status":"done"}');
+        }
+        if (str_ends_with($request->url, '/translation')) {
+            return new HttpResponse(200, '<html><body><div data-st-id="0">Hallo</div></body></html>');
+        }
+        return new HttpResponse(204);
+    }
+};
+$factoryWith = static function (array $config): SupertextClientFactory {
+    $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['supertext_translation'] = $config;
+    return new SupertextClientFactory(new ExtensionSettings(new ExtensionConfiguration()), new RequestFactory(new GuzzleClientFactory()));
+};
+$hosts = static function (array $calls): array {
+    $byHost = [];
+    foreach ($calls as $call) {
+        [$method, $url] = explode(' ', $call, 2);
+        $byHost[(string)parse_url($url, PHP_URL_HOST)][] = $method;
+    }
+    return $byHost;
+};
+$factory = $factoryWith(['apiKey' => 'test-key', 'endpoint' => 'https://api.test/v1', 'reviewUrl' => 'https://review.test/v1']);
+$factory->createWith(true, $recorder)->translateTexts([new Segment('Hello', false)], 'de-CH', 'en');
+$check('review: upload, status, download and delete through the review service', $hosts($recorder->calls), ['review.test' => ['POST', 'GET', 'GET', 'DELETE']]);
+$check('review: the review service URL', str_starts_with($recorder->calls[0], 'POST https://review.test/v1/'), true);
+$recorder->calls = [];
+$factory->createWith(false, $recorder)->translateTexts([new Segment('Hello', false)], 'fr-CH', 'en');
+$check('review off: directly to Supertext', $hosts($recorder->calls), ['api.test' => ['POST', 'GET', 'GET', 'DELETE']]);
+$check('review: default is Supertext\'s review service', $factoryWith([])->baseUrl(true), SupertextClientFactory::REVIEW_URL);
+$check('review: default stays the API for other languages', $factoryWith([])->baseUrl(false), 'https://api.supertext.com/v1/');
+$check('review: empty reviewUrl turns it off', $factoryWith(['reviewUrl' => ''])->baseUrl(true), 'https://api.supertext.com/v1/');
+$check('review: the API URL as reviewUrl means no review client', $factoryWith(['reviewUrl' => 'https://api.supertext.com/v1'])->baseUrl(true), 'https://api.supertext.com/v1/');
+putenv('SUPERTEXT_REVIEW_URL=https://other-review.test/v1/');
+$check('review: SUPERTEXT_REVIEW_URL wins', $factoryWith(['reviewUrl' => ''])->baseUrl(true), 'https://other-review.test/v1/');
+putenv('SUPERTEXT_REVIEW_URL');
+$check('review: User-Agent with the version', (bool)preg_match('#^TYPO3-Supertext-Translation/\S+$#', SupertextClientFactory::userAgent()), true);
+$base = new Uri('https://www.example.ch/');
+$check('review: on for a target language', LanguageResolver::reviewOf(new SiteLanguage(1, 'de_CH.UTF-8', $base, ['supertext_review' => 1])), true);
+$check('review: off by default', LanguageResolver::reviewOf(new SiteLanguage(1, 'de_CH.UTF-8', $base, [])), false);
+$check('review: never for the default language', LanguageResolver::reviewOf(new SiteLanguage(0, 'en_US.UTF-8', $base, ['supertext_review' => 1])), false);
+$check('review: the setting has a default in ext_conf_template.txt', str_contains((string)file_get_contents(__DIR__ . '/../ext_conf_template.txt'), 'reviewUrl = ' . SupertextClientFactory::REVIEW_URL), true);
 
 foreach ($failures as $failure) {
     fwrite(STDERR, $failure . "\n");

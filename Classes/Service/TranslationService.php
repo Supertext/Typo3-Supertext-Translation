@@ -76,7 +76,7 @@ final class TranslationService
                 $result->errors[] = $labels->get('error.noSiteLanguage', $job['table'], $job['source'], $job['language']);
                 continue;
             }
-            $key = $language['target'] . '|' . $language['source'] . '|' . $language['politeness'];
+            $key = $language['target'] . '|' . $language['source'] . '|' . $language['politeness'] . '|' . ($language['review'] ? 'review' : '');
             $groups[$key]['language'] ??= $language;
             foreach ($this->fieldCollector->collect($job['table'], $source) as $field => $isHtml) {
                 $groups[$key]['segments'][] = [
@@ -99,7 +99,8 @@ final class TranslationService
         }
 
         $datamap = $verbatim;
-        $client = null;
+        // One client for direct translations, one for languages with "Translation review" on.
+        $clients = [];
         foreach ($groups as $group) {
             if (empty($group['segments'])) {
                 continue;
@@ -110,7 +111,7 @@ final class TranslationService
                 $texts[$i] = new Segment($segment['text'], $segment['html']);
             }
             try {
-                $client ??= $this->clientFactory->create();
+                $client = $clients[$language['review'] ? 1 : 0] ??= $this->clientFactory->create($language['review']);
                 $translated = $client->translateTexts($texts, $language['target'], $language['source'], $language['politeness']);
             } catch (\Throwable $e) {
                 $this->logger->error('Supertext translation failed', ['exception' => $e, 'language' => $language['target']]);

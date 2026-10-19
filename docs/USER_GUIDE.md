@@ -43,6 +43,8 @@ When the page already exists in the target language, translate new or missing co
 
 New translations are **hidden** — TYPO3's default — so nothing goes live unreviewed.
 
+**Translation review:** if your administrator turned on *Translation review* for a language, reviewers (your colleagues or Supertext linguists) check and correct the translations on the website. Their corrections come into TYPO3 the next time content is translated into that language: after a review, delete the translation and translate it again. Texts reviewed once keep their corrected wording in later translations.
+
 1. Read through the translated page and elements, correct anything you'd phrase differently.
 2. Unhide the page translation and the content elements (eye icon) when you're happy.
 

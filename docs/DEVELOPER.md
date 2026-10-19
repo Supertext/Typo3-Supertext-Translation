@@ -30,14 +30,14 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Hooks\DataHandlerHook` | Collects every record localized in a DataHandler run (from `copyMappingArray`, so inline children like `sys_file_reference` are included), triggers translation in `afterFinish`, shows flash messages. |
 | `Service\TranslationService` | Groups segments per language pair, sends each pair's fields as keyed texts to the SDK's `translateTexts()` (which splits only above ~900k characters), writes results through a second DataHandler run (guarded by `TranslationService::$running` to avoid recursion), regenerates page slugs, keeps skipped code fields verbatim. |
 | `Service\FieldCollector` | TCA-driven field selection: `input`/`text`, not `l10n_mode=exclude`, not read-only, no numeric/date/email evals, no code editors, no technical reference fields (`sys_file_reference.tablenames`/`fieldname`/`table_local`, link `target`); detects rich text. |
-| `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code`, else an exact Supertext code, else the SDK's default; see *Language codes*), source (default language's bare language), politeness. Throws the SDK's `unsupported_language` for languages with neither. `migratedCode()` is the upgrade rule for old values. |
-| `Api\SupertextClientFactory` | Creates the SDK's `Supertext\Typo3Translation\Sdk\V1\Client` from the extension configuration (key, endpoint, poll interval and timeout, User-Agent `TYPO3-Supertext-Translation/<version>` with the version from `ext_emconf.php`). |
+| `Service\LanguageResolver` | Maps a site language to a Supertext target (`supertext_code`, else an exact Supertext code, else the SDK's default; see *Language codes*), source (default language's bare language), politeness and *Translation review* (`supertext_review`, `reviewOf()`). Throws the SDK's `unsupported_language` for languages with neither. `migratedCode()` is the upgrade rule for old values. |
+| `Api\SupertextClientFactory` | Creates the SDK's `Supertext\Typo3Translation\Sdk\V1\Client` from the extension configuration (key, endpoint, poll interval and timeout, User-Agent `TYPO3-Supertext-Translation/<version>` with the version from `ext_emconf.php`); `create(true)` is the client for languages with *Translation review* (base URL `reviewUrl`, default `SupertextClientFactory::REVIEW_URL`). |
 | `Reporting\Reporting` | Commando Center glue without TYPO3 classes: builds Plugin Health's `InstallationReporter` with the SDK's key check (`Client::checkApiKey()`, `Protocol::apiKeyFingerprint()`, `Supertext::SDK_VERSION`), picks the action (`afterSettingsSaved` when the configuration fingerprint changed, else `onRequest`; `authenticationFailed` after a 401/403), loads and stores the reporter state, answers the ping. Never throws. |
 | `Reporting\PluginHealthTransport` | Plugin Health's `HttpTransport` over the SDK's (`Api\Typo3HttpTransport`), so reports use TYPO3's HTTP client too. No TYPO3 classes; excluded from DI like `Reporting`. |
 | `Reporting\Typo3Reporting` | Feeds `Reporting` with the site URL, TYPO3 version, ping URL and the registry (`Reporting\RegistryStateStorage`); `later()` runs the reporter at the end of the request (after `fastcgi_finish_request()` where available). |
 | `Middleware\PingMiddleware` | Public `GET <root>/supertext/ping` in the frontend stack, before the site resolver (no login, session or page cache). |
 | `Configuration\StatusField` | The *Status* block at the top of the extension configuration (`type=user` in `ext_conf_template.txt`): key check, version reports, language mapping per site. |
-| `Configuration/SiteConfiguration/Overrides/site_language.php` | The *Supertext* palette in the site language form: `supertext_code` (`selectSingle`, items from `Configuration\SiteLanguageItems->targetItems`, `onChange: reload`) and `supertext_politeness` (display condition `SiteLanguageItems->offersPoliteness`). |
+| `Configuration/SiteConfiguration/Overrides/site_language.php` | The *Supertext* palette in the site language form: `supertext_code` (`selectSingle`, items from `Configuration\SiteLanguageItems->targetItems`, `onChange: reload`) and `supertext_politeness` (display condition `SiteLanguageItems->offersPoliteness`), and `supertext_review` (`check`/`checkboxToggle`, target languages only). |
 | `Configuration\SiteLanguageItems` | `itemsProcFunc` of the select: the empty option labelled *Default (&lt;`Languages::suggestTarget()`&gt;)* or *— choose —*, then `Languages::targetOptions()` as "Name (code)" with the name from PHP intl's `Locale::getDisplayName()` in the backend user's language (sorted with `Collator`; English and Swiss German names from the SDK), plus a stored code that isn't in the list. `offersPoliteness()`: the tone field only where the effective target supports it (or none is known yet). |
 | `EventListener\ValidateSupertextCodes` | `SiteConfigurationBeforeWriteEvent`: a `supertext_code` must be a list code (respelled via `Languages::matchTarget()`) or the value already stored (custom YAML code); anything else is dropped. A tone other than `more`/`less`/empty is dropped. |
 | `Upgrades\SupertextCodeUpgradeWizard` | Upgrade wizard `supertextTranslation_languageCodes` (Install namespace: TYPO3 13, and its alias in 14): rewrites 0.1 free-text `supertext_code` values with `LanguageResolver::migratedCode()` through `SiteWriter`. Only listed when something changes. |
@@ -48,7 +48,7 @@ Hooks\DataHandlerHook ──► Service\TranslationService
 | `Files\TranslationFileGlue` | Export/import with the SDK's `TranslationFiles`, without TYPO3 classes (tested by `Tests/TranslationFilesTest.php`): builds the jobs (reference, languages via `LanguageResolver`), checks imported jobs, counts the results and hands the texts to the store. |
 | `Files\Typo3TranslationFileStore` | The TYPO3 side (`Files\TranslationFileStore`): collects a page's segments with `FieldCollector`, finds the site language, localizes missing records and writes through `TranslationService::writeBack()`. |
 | `Localization\Labels` | Messages in the backend user's language from `Resources/Private/Language/locallang.xlf`; translates the SDK's `SupertextException`s by their `errorCode` (`Labels::ERROR_LABELS`). |
-| `Configuration\ExtensionSettings` | Typed extension configuration plus `SUPERTEXT_API_KEY` / `SUPERTEXT_API_ENDPOINT` / `SUPERTEXT_VERSION_REPORTS` env overrides, and the configuration fingerprint. |
+| `Configuration\ExtensionSettings` | Typed extension configuration plus `SUPERTEXT_API_KEY` / `SUPERTEXT_API_ENDPOINT` / `SUPERTEXT_REVIEW_URL` / `SUPERTEXT_VERSION_REPORTS` env overrides, and the configuration fingerprint. |
 
 ## Supertext API protocol
 
@@ -58,6 +58,8 @@ The extension talks to Supertext through the official **Supertext SDK for PHP** 
 
 - Update it with `scripts/vendor-sdk.sh [commit-or-branch]` (default `main`; `SDK_DIR=<clone>` uses a local clone), run the tests, and commit with a CHANGELOG entry.
 - Never edit the copy: fix the SDK in its own repository, then re-run the script. PHPStan analyses `Classes/` only.
+
+**Translation review** (`supertext_review`, per target site language): `TranslationService` groups segments per language pair *and* review flag and takes `SupertextClientFactory::create($language['review'])` for each group, a second SDK client with the same key, timeouts, transport and User-Agent whose base URL is `reviewUrl` (default `SupertextClientFactory::REVIEW_URL`, the translation proxy of [Supertext Localization Review](https://github.com/Supertext/Localization-Review-Supertext-Translation); `SUPERTEXT_REVIEW_URL` wins when not empty). `translateTexts()` runs upload, status, download and delete with that one client, so a job is always collected by the client that submitted it. The proxy speaks the same API v1, forwards to the live Supertext API with the extension's key, stores every segment per key and serves reviewers' corrections on the next upload, so nothing else changes in the extension. `reviewUrl = ''` (or the same URL as the API) means every language goes directly. The API key check, version reports and translation files never use the review service. The default language never has review (`LanguageResolver::reviewOf()` only for `languageId > 0`). `Tests/SdkTest.php` (section 6) checks that all four calls go to the review URL for a review language and to the API otherwise, the default, `''`, the env override and the flag of a site language.
 
 ## Supertext Plugin Health
 
@@ -149,7 +151,7 @@ To test without a real key, point `SUPERTEXT_API_ENDPOINT` at `Tests/Docs/stand-
 
 ```bash
 composer install --no-dev        # TYPO3 core (the SDK and Plugin Health are bundled in lib/)
-php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → Supertext codes (mapping, exact, default); the site language select, the upgrade migration and the save check; translateTexts round trip with a fake transport
+php Tests/SdkTest.php            # every SDK error code has a label; TYPO3 locales → Supertext codes (mapping, exact, default); the site language select, the upgrade migration and the save check; translateTexts round trip with a fake transport; Translation review (review service for all four calls, others direct, default, '' off, env, User-Agent)
 php Tests/ReportingTest.php      # Commando Center glue: which reporter action runs when, stored state, report contents, center failures, a state stored by the SDK 0.2 reporter, setting + env, ping answers and middleware
 php Tests/TranslationFilesTest.php  # export/import glue with a fake store: reference round trip, collector keys and mapping in the jobs, other plugin / unknown reference / missing language, ok written, source_changed only with the option, untranslated / invalid / missing not written, files over 10 MB refused
 php Tests/LanguageFilesTest.php  # de/fr/it XLIFF files match locallang.xlf (keys, placeholders, URLs); every label the code and configuration use exists
@@ -186,7 +188,8 @@ The public demo is a container built from `demo/Dockerfile`: TYPO3 14.3 with the
 | `DEMO_EDITOR_EMAIL`, `DEMO_EDITOR_PASSWORD` | Optional second account, e.g. for automated tests and screenshots. TYPO3 ships no ready-made editor group, so it is an admin without maintainer rights (no Install Tool or system maintenance). |
 | `TYPO3_PROJECT_NAME` | Optional, first boot only |
 | `SUPERTEXT_API_KEY` | Supertext key used by the extension |
-| `SUPERTEXT_API_ENDPOINT` | Optional, e.g. the staging API |
+| `SUPERTEXT_API_ENDPOINT` | Optional, e.g. the staging API (to try the review service, switch on *Translation review* in the site languages instead) |
+| `SUPERTEXT_REVIEW_URL` | Optional: another review service than Supertext's (`reviewUrl`; empty keeps the default) |
 | `SUPERTEXT_VERSION_REPORTS` | Optional; `0` turns version information to the Supertext Commando Center off (default on) |
 | `TYPO3_TRUSTED_HOSTS` | Optional regex of allowed host names (default: any); on the demo it lists the Railway domain **and `healthcheck.railway.app`** (the host Railway's healthcheck sends; without it every check gets a 500) |
 | `PORT` | Port Apache listens on; `8080` on Railway, matching the domain's target port |
@@ -256,7 +259,7 @@ Releases are published by `.github/workflows/release.yml` when the version is of
 
 - Translation runs synchronously inside the editor's request (up to `pollTimeout`). Planned: queue + scheduler task for large pages, and webhook completion via TYPO3 `reactions` if Supertext offers callbacks.
 - FlexForm fields and container/grid extensions are not translated yet.
-- No "retranslate" action for existing translations.
+- No "retranslate" action for existing translations. A translation memory and reviewers' corrections come from the review service when a language has *Translation review* on; corrections reach TYPO3 only with the next translation (no push).
 - Human (professional) translation orders are not supported yet (the WordPress plugin has them).
 - Not yet tested on TYPO3 13.4 (the *Supertext* backend module included: it is written against APIs that exist in both, and registers under `web` there).
 - The extension configuration has no *Test connection* button, and saving it can't be detected right away (no event): the key check runs when the configuration is opened again or the next translation runs.

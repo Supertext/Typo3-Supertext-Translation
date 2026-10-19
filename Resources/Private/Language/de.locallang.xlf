@@ -19,6 +19,10 @@
 				<source>Custom API base URL: Overrides the environment when set (e.g. https://api.supertext.com/v1/).</source>
 				<target>Eigene API-Basis-URL: Ersetzt die Umgebung, wenn gesetzt (z. B. https://api.supertext.com/v1/).</target>
 			</trans-unit>
+			<trans-unit id="settings.reviewUrl" approved="yes">
+				<source>Review service URL: Address of Supertext's review service, used for site languages with Translation review on. Keep the default unless Supertext gives you another address; empty turns Translation review off for every language. The environment variable SUPERTEXT_REVIEW_URL takes precedence.</source>
+				<target>URL des Prüfdienstes: Adresse des Prüfdienstes von Supertext für Sprachen mit eingeschalteter Übersetzungsprüfung. Belassen Sie den Standardwert, ausser Supertext nennt Ihnen eine andere Adresse; leer schaltet die Übersetzungsprüfung für alle Sprachen aus. Die Umgebungsvariable SUPERTEXT_REVIEW_URL hat Vorrang.</target>
+			</trans-unit>
 			<trans-unit id="settings.pollTimeout" approved="yes">
 				<source>Polling timeout (seconds): Maximum time to wait for a translation.</source>
 				<target>Abfrage-Timeout (Sekunden): Maximale Wartezeit auf eine Übersetzung.</target>
@@ -274,6 +278,14 @@
 			<trans-unit id="siteLanguage.politeness.description" approved="yes">
 				<source>Formal (Sie, vous, Lei) or informal (du, tu) address, for languages where Supertext offers it.</source>
 				<target>Formelle (Sie) oder informelle (du) Anrede, für Sprachen, in denen Supertext sie anbietet.</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.review" approved="yes">
+				<source>Translation review</source>
+				<target>Übersetzungsprüfung</target>
+			</trans-unit>
+			<trans-unit id="siteLanguage.review.description" approved="yes">
+				<source>Translations into this site language go through Supertext's review service, so reviewers can check and correct them on the website with the Supertext Localization Review extension. Their corrections are used the next time content is translated into this language.</source>
+				<target>Übersetzungen in diese Sprache laufen über den Prüfdienst von Supertext, damit Prüferinnen und Prüfer sie mit der Erweiterung Supertext Localization Review direkt auf der Website kontrollieren und korrigieren können. Ihre Korrekturen werden beim nächsten Übersetzen von Inhalten in diese Sprache übernommen.</target>
 			</trans-unit>
 			<trans-unit id="file.saved" approved="yes">
 				<source>File saved: %s</source>
