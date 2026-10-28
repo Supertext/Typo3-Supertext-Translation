@@ -21,7 +21,7 @@
 - Changed: bundled Supertext SDK 0.2.0 (`c66cb4d`, API classes in the `V1` namespace). The User-Agent now carries the version from `ext_emconf.php`.
 - Changed: the extension now talks to Supertext through the official [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-and-Guide) instead of its own API client, HTML packer and language code rules. The SDK is bundled in the extension (`lib/supertext-sdk`), so there is nothing extra to install. Same behaviour; requests go through TYPO3's HTTP client as before.
 - Added: clear messages when Supertext rejects a language pair or returns an incomplete translation (in English, German, French and Italian).
-- Demo: TYPO3 14.3.9 (security update).
+- Demo: TYPO3 14.3.10.
 - Fixed: target languages whose locale has no region (e.g. `de`) are now sent to Supertext as a regional code (`de-DE`, `fr-FR`, `en-US`, …), which Supertext requires; a `supertext_code` override is normalized (`de_ch` → `de-CH`). The source is always sent without region.
 - Fixed: a target language Supertext doesn't know is now reported as an unsupported language pair (was: *file not found*).
 - Fixed: locale variants such as `de_DE_formal` (in a `supertext_code`) are sent to Supertext as `de-DE`.
